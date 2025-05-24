@@ -1,0 +1,23 @@
+services:
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/app/data
+      - ./db:/app/db
+      - whisper_cache:/app/whisper_cache
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          memory: 16g
+        reservations:
+          memory: 16g
+
+volumes:
+  whisper_cache:
+    driver: local
