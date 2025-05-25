@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, jsonify, render_template
 import tempfile
 from google import genai
-from prompt import get_recipe_transcription_prompt
+from prompt import prompt_template
 import io
 from pydub import AudioSegment
 
@@ -59,9 +59,6 @@ def generate_recipe():
                 # Upload the combined file to Gemini
                 try:
                     audio_file = client.files.upload(file=temp_audio.name)
-
-                    # Get the prompt template
-                    prompt_template = get_recipe_transcription_prompt("")
 
                     # Generate recipe using Gemini API with file and prompt
                     response = client.models.generate_content(
