@@ -74,6 +74,29 @@
     #recipeBtn:active {
       background: #388e3c;
     }
+    .recipe-section {
+      margin-bottom: 20px;
+    }
+    .recipe-section h3 {
+      color: #2196f3;
+      margin-bottom: 10px;
+    }
+    .recipe-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .recipe-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .recipe-list li:last-child {
+      border-bottom: none;
+    }
+    .questions-list {
+      list-style-type: disc;
+      padding-left: 20px;
+      color: #666;
+    }
     #recipe {
       white-space: pre-wrap;
       line-height: 1.5;
@@ -85,8 +108,7 @@
     <h1>Transcription Vocale</h1>
     <button id="recordBtn" class="rec-btn">🎤<br><span id="recLabel">Enregistrer</span></button>
     <audio id="audioPlayback" class="hidden" controls style="width:100%;margin-bottom:16px;"></audio>
-    <button id="transcribeBtn" class="blue-btn" disabled>Transcrire</button>
-    <div id="transcript"></div>
+    <div id="audioList"></div>
     <button id="recipeBtn" class="blue-btn" disabled>Générer la recette</button>
     <div id="recipe" class="recipe-container"></div>
   </div>

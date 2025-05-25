@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y \
 # Créer le répertoire de travail
 WORKDIR /app
 
-# Créer le répertoire de cache pour Whisper
-RUN mkdir -p /app/whisper_cache
-
 # Copier les fichiers requirements
 COPY requirements.txt .
 
@@ -26,8 +23,7 @@ COPY . .
 EXPOSE 5001
 
 # Variables d'environnement par défaut
-ENV WHISPER_CACHE_DIR=/app/whisper_cache
-ENV WHISPER_MODEL_NAME=base
+ENV PYTHONUNBUFFERED=1
 
 # Commande pour démarrer l'application
-CMD ["python", "app.py"]
+CMD ["python", "-u", "app.py"]

@@ -4,3 +4,4 @@ torch
 openai-whisper
 requests
 google-genai
+pydub

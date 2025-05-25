@@ -2,16 +2,12 @@ from dotenv import load_dotenv
 import os
 from flask import Flask, request, jsonify, render_template
 import tempfile
-from whisper_cache import WhisperCacheManager
 from google import genai
 from prompt import get_recipe_transcription_prompt
+import io
+from pydub import AudioSegment
 
 load_dotenv()
-
-# get model_name from args
-model_name = os.getenv("WHISPER_MODEL_NAME", "base")
-if not model_name:
-    raise RuntimeError("WHISPER_MODEL_NAME is not set in environment variables.")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
@@ -20,84 +16,78 @@ if not GEMINI_API_KEY:
 app = Flask(__name__)
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Initialiser le modèle au démarrage
-print(f"Initialisation du modèle Whisper '{model_name}'...")
-wcm = WhisperCacheManager()
-whisper_model = wcm.get_whisper_model(model_name)
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_audio():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
-        file.save(temp_audio)
-        temp_path = temp_audio.name
-    
-    return jsonify({'message': 'File uploaded', 'temp_path': temp_path}), 200
-
-@app.route('/transcribe', methods=['POST'])
-def transcribe_audio():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    
-    # Sauvegarder le fichier temporairement
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
-        file.save(temp_audio)
-        temp_path = temp_audio.name
-    
-    # Transcrire avec Whisper
-    try:
-        result = whisper_model.transcribe(temp_path, language='fr')
-        text = result['text']
-        
-        # Nettoyer le fichier temporaire
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
-            
-        return jsonify({'text': text})
-    except Exception as e:
-        # Nettoyer le fichier temporaire en cas d'erreur
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
-        return jsonify({'error': f'Erreur Whisper: {e}'}), 500
-
 @app.route('/generate_recipe', methods=['POST'])
 def generate_recipe():
     try:
-        data = request.json
-        if not data or 'transcription' not in data:
-            return jsonify({'error': 'No transcription provided'}), 400
+        # Get all audio files from the request
+        audio_files = request.files.getlist('audio')
+        if not audio_files:
+            return jsonify({'error': 'No audio files provided'}), 400
 
-        transcription = data['transcription']
-        prompt = get_recipe_transcription_prompt(transcription)
+        # Create a temporary file for the combined audio
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_audio:
+            # Initialize combined audio segment
+            combined = None
+            
+            # Process each audio file
+            for audio_file in audio_files:
+                if audio_file.filename == '':
+                    continue
+                    
+                # Read the audio file into memory
+                audio_data = io.BytesIO(audio_file.read())
+                try:
+                    # Load the audio segment
+                    segment = AudioSegment.from_file(audio_data)
+                    
+                    # Add to combined segment
+                    if combined is None:
+                        combined = segment
+                    else:
+                        combined += segment
+                except Exception as e:
+                    return jsonify({'error': f'Error processing audio file {audio_file.filename}: {str(e)}'}), 500
+            
+            if combined:
+                # Export the combined audio to the temporary file
+                combined.export(temp_audio.name, format='wav')
+                
+                # Upload the combined file to Gemini
+                try:
+                    audio_file = client.files.upload(file=temp_audio.name)
 
-        # Generate recipe using Gemini API
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-preview-05-20"
-            , contents=prompt
-        )
+                    # Get the prompt template
+                    prompt_template = get_recipe_transcription_prompt("")
 
-        if response.text:
-            return jsonify({'recipe': response.text})
-        else:
-            return jsonify({'error': 'Failed to generate recipe'}), 500
+                    # Generate recipe using Gemini API with file and prompt
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash-preview-05-20",
+                        config={"response_mime_type": "application/json"},
+                        contents=[audio_file, prompt_template]
+                    )
+
+                    if response.text:
+                        try:
+                            # Convert Gemini's response text to a dictionary and return it directly
+                            recipe_json = eval(response.text)
+                            if not all(key in recipe_json for key in ['ingredients', 'steps', 'questions']):
+                                return jsonify({'error': 'Invalid recipe format'}), 500
+                            return jsonify(recipe_json)
+                        except Exception as e:
+                            return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
+                    else:
+                        return jsonify({'error': 'No response from Gemini API'}), 500
+
+                finally:
+                    # Clean up the temporary file
+                    try:
+                        os.unlink(temp_audio.name)
+                    except:
+                        pass
 
     except Exception as e:
         return jsonify({'error': f'Error generating recipe: {str(e)}'}), 500
