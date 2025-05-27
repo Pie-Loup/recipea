@@ -1,11 +1,12 @@
 from dotenv import load_dotenv
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import tempfile
 from google import genai
 from prompt import prompt_template
 import io
 from pydub import AudioSegment
+import httpx
 
 load_dotenv()
 
@@ -16,11 +17,104 @@ if not GEMINI_API_KEY:
 app = Flask(__name__)
 client = genai.Client(api_key=GEMINI_API_KEY)
 
+SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET")
+if not SUPABASE_JWT_SECRET:
+    raise RuntimeError("SUPABASE_JWT_SECRET is not set in environment variables.")
+SUPABASE_PROJECT_ID = os.environ.get("SUPABASE_PROJECT_ID")
+if not SUPABASE_PROJECT_ID:
+    raise RuntimeError("SUPABASE_PROJECT_ID is not set in environment variables.")
+supabase_anon_key = os.environ.get('SUPABASE_ANON_KEY')
+if not supabase_anon_key:
+    raise RuntimeError("SUPABASE_ANON_KEY is not set in environment variables.")
+supabase_url = os.environ.get('SUPABASE_URL')
+if not supabase_url:
+    raise RuntimeError("SUPABASE_URL is not set in environment variables.")
+
+def verify_supabase_jwt(token):
+    print("Verifying token:", token[:20] + "..." if token else None)  # Debug log
+    # You can use PyJWT to verify, or call Supabase's /user endpoint
+    # Here is a simple example using PyJWT:
+    import jwt
+    try:
+        # Note: Supabase JWTs use HS256 algorithm and have specific claims
+        payload = jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience=["authenticated"],
+            options={"verify_exp": True}
+        )
+        print("Token verification success:", payload.get('sub'))  # Debug log
+        return payload
+    except Exception as e:
+        print("Token verification failed:", str(e))  # Debug log
+        return None
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.cookies.get("sb-access-token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+        if not token or not verify_supabase_jwt(token):
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def check_user_has_username(token):
+    headers = {
+        "apikey": supabase_anon_key,
+        "Authorization": f"Bearer {token}"
+    }
+    
+    response = httpx.get(
+        f"{supabase_url}/rest/v1/profiles",
+        headers=headers,
+        params={
+            "id": f"eq.{verify_supabase_jwt(token)['sub']}",
+            "select": "username"
+        }
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        return len(data) > 0
+    return False
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/username-setup')
+@login_required
+def username_setup():
+    return render_template('username.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/feed')
+@login_required
+def feed():
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('feed.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/recipe_generator')
+@login_required
+def recipe_generator():
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/profile')
+@login_required
+def profile():
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('profile.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
 
 @app.route('/generate_recipe', methods=['POST'])
+@login_required
 def generate_recipe():
     try:
         # Get all audio files from the request

@@ -1,117 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>LLM App</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
-    h1 { text-align: center; }
-    .rec-btn {
-      display: block;
-      margin: 32px auto 16px auto;
-      width: 120px;
-      height: 120px;
-      border-radius: 60px;
-      background: orange;
-      color: white;
-      font-size: 1.5em;
-      border: none;
-      box-shadow: 0 4px 16px #ff980033;
-      cursor: pointer;
-      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-      outline: none;
-      position: relative;
-    }
-    .rec-btn.recording {
-      background: #ff5722;
-      box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033; }
-      50% { box-shadow: 0 0 0 24px #ff980033, 0 4px 16px #ff980033; }
-      100% { box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033; }
-    }
-    .blue-btn {
-      display: block;
-      margin: 0 auto 24px auto;
-      padding: 16px 32px;
-      background: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .blue-btn:active { background: #1976d2; }
-    #transcript {
-      background: #f1f8ff;
-      border-radius: 8px;
-      padding: 16px;
-      min-height: 40px;
-      font-size: 1.1em;
-      color: #222;
-      margin-top: 12px;
-      white-space: pre-wrap;
-    }
-    .hidden { display: none; }
-    .recipe-container {
-      margin-top: 24px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      display: none;
-    }
-    .recipe-container.visible {
-      display: block;
-    }
-    #recipeBtn {
-      background: #4caf50;
-      margin-top: 16px;
-    }
-    #recipeBtn:active {
-      background: #388e3c;
-    }
-    .recipe-section {
-      margin-bottom: 20px;
-    }
-    .recipe-section h3 {
-      color: #2196f3;
-      margin-bottom: 10px;
-    }
-    .recipe-list {
-      list-style-type: none;
-      padding-left: 0;
-    }
-    .recipe-list li {
-      padding: 8px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .recipe-list li:last-child {
-      border-bottom: none;
-    }
-    .questions-list {
-      list-style-type: disc;
-      padding-left: 20px;
-      color: #666;
-    }
-    #recipe {
-      white-space: pre-wrap;
-      line-height: 1.5;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sauce</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .login-btn { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+        .google { background: #4285F4; color: #fff; }
+        .facebook { background: #3b5998; color: #fff; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Transcription Vocale</h1>
-    <button id="recordBtn" class="rec-btn">🎤<br><span id="recLabel">Enregistrer</span></button>
-    <audio id="audioPlayback" class="hidden" controls style="width:100%;margin-bottom:16px;"></audio>
-    <div id="audioList"></div>
-    <button id="recipeBtn" class="blue-btn" disabled>Générer la recette</button>
-    <div id="recipe" class="recipe-container"></div>
-  </div>
-  <script src="/static/js/app.js"></script>
+    <div class="login-container">
+        <h2>Login to Sauce</h2>
+        <button class="login-btn google" onclick="loginWithProvider('google')">Login with Google</button>
+        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Login with Facebook</button>
+    </div>
+    <script>
+        // Supabase project URL and anon key
+        const SUPABASE_URL = "{{ supabase_url }}";
+        const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Check session on page load
+        client.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                window.location.href = '/feed';
+            }
+        });
+
+        // Listen for auth state changes (for after login redirect)
+        client.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                // Set cookie for backend (expires in 7 days, path=/)
+                document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax`;
+                window.location.href = '/feed';
+            }
+        });
+
+        async function loginWithProvider(provider) {
+            const { data, error } = await client.auth.signInWithOAuth({ provider });
+            if (error) alert('Error: ' + error.message);
+            // On success, Supabase will redirect to your site with a session
+        }
+    </script>
 </body>
 </html>

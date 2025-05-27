@@ -5,3 +5,5 @@ openai-whisper
 requests
 google-genai
 pydub
+PyJWT
+httpx

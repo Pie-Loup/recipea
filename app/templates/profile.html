@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Sauce</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .profile-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
+        h1, h2 { text-align: center; }
+        .nav-container { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
+        .btn { display: block; padding: 12px 32px; background: #2196f3; color: #fff; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
+        .btn:active { background: #1976d2; }
+
+        /* Search and follow styles */
+        .search-container { margin: 20px 0; }
+        .search-input { 
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+        .search-results {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .follow-btn {
+            padding: 6px 16px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .unfollow-btn {
+            background: #f44336;
+        }
+        .following-list {
+            margin-top: 32px;
+        }
+        .following-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* Add styles for followers section */
+        .followers-list {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div class="profile-container">
+        <div class="nav-container">
+            <button class="btn" onclick="window.location.href='/feed'" style="background:#666">Retour</button>
+            <button class="btn" onclick="window.location.href='/recipe_generator'">Créer une recette</button>
+        </div>
+        
+        <h1>Mon Profil</h1>
+        <div id="userInfo"></div>
+
+        <div class="search-container">
+            <h2>Rechercher des utilisateurs</h2>
+            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par nom d'utilisateur, nom ou email..." oninput="debounceSearch()">
+            <div id="searchResults" class="search-results"></div>
+        </div>
+
+        <div class="following-list">
+            <h2>Chefs suivis</h2>
+            <div id="followingList"></div>
+        </div>
+
+        <div class="followers-list">
+            <h2>Suivi par</h2>
+            <div id="followersList"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "{{ supabase_url }}";
+        const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUser = null;
+        let followingUsers = new Set();
+
+        // Debounce helper
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Search users
+        const searchUsers = async (query) => {
+            try {
+                console.log('Searching for:', query);
+                if (!query) {
+                    document.getElementById('searchResults').style.display = 'none';
+                    return;
+                }
+
+                // Use the user_profiles table for search
+                const { data: users, error } = await client
+                    .from('user_profiles')
+                    .select('id, email, username, full_name')
+                    .or(`email.ilike.%${query}%,username.ilike.%${query}%,full_name.ilike.%${query}%`)
+                    .neq('id', currentUser.id)
+                    .limit(5);
+
+                console.log('Search results:', { users, error });
+
+                if (error) {
+                    console.error('Error searching users:', error);
+                    return;
+                }
+
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = users.map(user => `
+                    <div class="search-item">
+                        <span>${user.username || user.full_name || user.email}</span>
+                        <button 
+                            onclick="toggleFollow('${user.id}')"
+                            class="follow-btn ${followingUsers.has(user.id) ? 'unfollow-btn' : ''}"
+                        >
+                            ${followingUsers.has(user.id) ? 'Ne plus suivre' : 'Suivre'}
+                        </button>
+                    </div>
+                `).join('');
+                resultsDiv.style.display = users.length ? 'block' : 'none';
+            } catch (error) {
+                console.error('Unexpected error in searchUsers:', error);
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '<div class="search-item" style="color: #f44336;">Une erreur s\'est produite lors de la recherche.</div>';
+                resultsDiv.style.display = 'block';
+            }
+        };
+
+        const debounceSearch = debounce(() => {
+            const query = document.getElementById('searchInput').value;
+            searchUsers(query);
+        }, 300);
+
+        // Toggle follow/unfollow
+        async function toggleFollow(targetUserId) {
+            if (followingUsers.has(targetUserId)) {
+                // Unfollow
+                const { error } = await client
+                    .from('follows')
+                    .delete()
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', targetUserId);
+
+                if (!error) {
+                    followingUsers.delete(targetUserId);
+                }
+            } else {
+                // Follow
+                const { error } = await client
+                    .from('follows')
+                    .insert([
+                        { follower_id: currentUser.id, following_id: targetUserId }
+                    ]);
+
+                if (!error) {
+                    followingUsers.add(targetUserId);
+                }
+            }
+
+            // Refresh the display
+            await loadFollowing();
+            const searchQuery = document.getElementById('searchInput').value;
+            if (searchQuery) {
+                await searchUsers(searchQuery);
+            }
+        }
+
+        // Load following list
+        async function loadFollowing() {
+            try {
+                console.log('Loading following for user:', currentUser.id);
+
+                // Get the list of people we follow with their details
+                const { data: following, error: followError } = await client
+                    .from('follows')
+                    .select(`
+                        following_id,
+                        following:user_profiles!follows_following_id_fkey (
+                            id,
+                            email,
+                            username,
+                            full_name
+                        )
+                    `)
+                    .eq('follower_id', currentUser.id);
+
+                console.log('Following query response:', { following, error: followError });
+
+                if (followError) {
+                    console.error('Error loading following:', followError);
+                    document.getElementById('followingList').innerHTML = 
+                        '<div class="following-item" style="color: #f44336;">Error loading following list. Please try refreshing.</div>';
+                    return;
+                }
+
+                const followingDiv = document.getElementById('followingList');
+                if (!following || following.length === 0) {
+                    followingDiv.innerHTML = '<div class="following-item">Vous ne suivez aucun chef pour le moment, ça se prend pour un dur?</div>';
+                    return;
+                }
+
+                // Update the followingUsers Set for the search functionality
+                followingUsers = new Set(following.map(f => f.following_id));
+
+                // Display the following list
+                followingDiv.innerHTML = following.map(follow => `
+                    <div class="following-item">
+                        <span>${follow.following ? (follow.following.username || follow.following.full_name || follow.following.email || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
+                        <button 
+                            onclick="toggleFollow('${follow.following_id}')"
+                            class="follow-btn unfollow-btn"
+                        >
+                            Ne plus suivre
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Unexpected error in loadFollowing:', error);
+                document.getElementById('followingList').innerHTML = 
+                    '<div class="following-item" style="color: #f44336;">Une erreur inattendue s\'est produite.</div>';
+            }
+        }
+
+        // Load followers list
+        async function loadFollowers() {
+            try {
+                console.log('Loading followers for user:', currentUser.id);
+
+                // Get the list of people following us
+                const { data: followers, error: followError } = await client
+                    .from('follows')
+                    .select(`
+                        follower_id,
+                        follower:user_profiles!follows_follower_id_fkey (
+                            id,
+                            email,
+                            username,
+                            full_name
+                        )
+                    `)
+                    .eq('following_id', currentUser.id);
+
+                console.log('Followers query response:', { followers, error: followError });
+
+                const followersDiv = document.getElementById('followersList');
+
+                if (followError) {
+                    console.error('Error loading followers:', followError);
+                    followersDiv.innerHTML = 
+                        '<div class="following-item" style="color: #f44336;">Erreur lors du chargement des abonnés. Essayez de rafraîchir.</div>';
+                    return;
+                }
+
+                if (!followers || followers.length === 0) {
+                    followersDiv.innerHTML = '<div class="following-item">Aucun chef ne te suit pour le moment 😭, tu cuisines comme un pou?</div>';
+                    return;
+                }
+
+                followersDiv.innerHTML = followers.map(f => `
+                    <div class="following-item">
+                        <span>${f.follower ? (f.follower.username || f.follower.full_name || f.follower.email || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Unexpected error in loadFollowers:', error);
+                document.getElementById('followersList').innerHTML = 
+                    '<div class="following-item" style="color: #f44336;">Une erreur inattendue s\'est produite.</div>';
+            }
+        }
+
+        // Initialize
+        async function init() {
+            const { data: { session } } = await client.auth.getSession();
+            if (!session) {
+                window.location.href = '/';
+                return;
+            }
+
+            currentUser = session.user;
+            // Get the user's username from the user_profiles table
+            const { data: profiles, error: profileError } = await client
+                .from('user_profiles')
+                .select('username')
+                .eq('id', currentUser.id)
+                .single();
+
+            const displayName = profiles?.username || currentUser.email;
+            document.getElementById('userInfo').innerHTML = `
+                <p style="text-align:center;color:#666">
+                    Connecté en tant que : ${displayName}
+                </p>
+            `;
+
+            // Load both following and followers
+            await Promise.all([
+                loadFollowing(),
+                loadFollowers()
+            ]);
+        }
+
+        init();
+    </script>
+</body>
+</html>

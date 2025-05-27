@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sauce Feed</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .feed-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
+        h1 { text-align: center; }
+        .feed-list { list-style: none; padding: 0; }
+        .feed-item { padding: 16px; border-bottom: 1px solid #eee; }
+        .feed-item:last-child { border-bottom: none; }
+        .new-recipe-btn { display: block; margin: 24px auto 0 auto; padding: 12px 32px; background: #2196f3; color: #fff; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
+        .new-recipe-btn:active { background: #1976d2; }
+        /* Navigation bar styles */
+        .nav-container { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div class="feed-container">
+        <div class="nav-container">
+            <button class="new-recipe-btn" onclick="window.location.href='/profile'" style="margin:0">Mon Profil</button>
+            <button class="new-recipe-btn" onclick="window.location.href='/recipe_generator'" style="margin:0">Créer une recette</button>
+        </div>
+        <h1>Bienvenue sur Sauce !</h1>
+        <ul class="feed-list" id="feedList">
+            <!-- Feed items will go here -->
+        </ul>
+        <button class="new-recipe-btn" onclick="window.location.href='/recipe_generator'">Créer une nouvelle recette</button>
+        <button class="new-recipe-btn" style="background:#e53935;margin-top:12px;" id="logoutBtn">Se déconnecter</button>
+    </div>
+    <script>
+        // --- Helper: Parse hash params from URL (for Supabase login redirect) ---
+        function parseHashParams() {
+            const hash = window.location.hash.substr(1);
+            return hash.split('&').reduce((res, item) => {
+                const parts = item.split('=');
+                if (parts[0] && parts[1]) res[parts[0]] = decodeURIComponent(parts[1]);
+                return res;
+            }, {});
+        }
+
+        const SUPABASE_URL = "{{ supabase_url }}";
+        const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- If access_token in hash, store in cookie and clean URL ---
+        (async function handleSupabaseLoginRedirect() {
+            const params = parseHashParams();
+            if (params.access_token) {
+                try {
+                    // Store token in cookie for Flask backend
+                    document.cookie = `sb-access-token=${params.access_token}; path=/; secure; samesite=strict; max-age=3600`;
+                    
+                    // Create session object
+                    const { access_token, refresh_token, expires_in } = params;
+                    const session = {
+                        access_token,
+                        refresh_token,
+                        expires_at: Math.floor(Date.now() / 1000) + Number(expires_in),
+                        user: null  // Will be fetched by Supabase client
+                    };
+
+                    // Set session in Supabase client
+                    await client.auth.setSession(session);
+                    
+                    // Clean URL and redirect to /feed
+                    history.replaceState(null, '', '/feed');
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Error setting session:', error);
+                    window.location.href = '/';
+                }
+            }
+        })();
+
+        // Check authentication
+        client.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                window.location.href = '/';
+            }
+        });
+        
+        // Placeholder: You can fetch and display user recipes here
+        document.getElementById('feedList').innerHTML = '<li class="feed-item">Aucune sauce pour le moment.</li>';
+        // Logout logic
+        document.getElementById('logoutBtn').onclick = async function() {
+            await client.auth.signOut();
+            window.location.href = '/';
+        };
+    </script>
+</body>
+</html>
