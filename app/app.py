@@ -80,9 +80,16 @@ def check_user_has_username(token):
         return len(data) > 0
     return False
 
+def get_site_url():
+    return request.scheme + "://" + request.host
+
 @app.route('/')
 def index():
-    return render_template('index.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+    site_url = get_site_url()
+    return render_template('index.html', 
+                         supabase_anon_key=supabase_anon_key, 
+                         supabase_url=supabase_url,
+                         site_url=site_url)
 
 @app.route('/username-setup')
 @login_required
