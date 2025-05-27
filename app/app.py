@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import tempfile
 from google import genai
-from prompts import prompt_voice, prompt_photo, prompt_text
+from prompts import prompt_voice, prompt_photo, prompt_text, prompt_update
 import io
 from pydub import AudioSegment
 import httpx
@@ -293,6 +293,57 @@ def generate_recipe_from_text():
 
     except Exception as e:
         return jsonify({'error': f'Error generating recipe: {str(e)}'}), 500
+
+@app.route('/update_recipe', methods=['POST'])
+@login_required
+def update_recipe():
+    try:
+        # Get the recipe and user comments from the request
+        data = request.json
+        if not data or 'recipe' not in data or 'user_comments' not in data:
+            return jsonify({'error': 'Missing recipe or user comments'}), 400
+
+        recipe = data['recipe']
+        user_comments = data['user_comments']
+
+        try:
+            # Convert recipe dict to structured text
+            recipe_text = f"""Voici la recette actuelle:
+
+Ingrédients:
+{chr(10).join(f"- {i}" for i in recipe['ingredients'])}
+
+Étapes:
+{chr(10).join(f"{i+1}. {s}" for i, s in enumerate(recipe['steps']))}
+
+Autres éléments:
+{chr(10).join(f"- {e}" for e in recipe.get('other_elements', []))}
+"""
+
+            # Generate updated recipe using Gemini API with recipe text, comments and prompt
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-preview-05-20",
+                config={"response_mime_type": "application/json"},
+                contents=[recipe_text, user_comments, prompt_update]
+            )
+
+            if response.text:
+                try:
+                    # Convert Gemini's response text to a dictionary and return it
+                    recipe_json = eval(response.text)
+                    if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+                        return jsonify({'error': 'Invalid recipe format'}), 500
+                    return jsonify(recipe_json)
+                except Exception as e:
+                    return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
+            else:
+                return jsonify({'error': 'No response from Gemini API'}), 500
+
+        except Exception as e:
+            return jsonify({'error': f'Error calling Gemini API: {str(e)}'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error updating recipe: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

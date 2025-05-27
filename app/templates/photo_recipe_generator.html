@@ -57,22 +57,63 @@
     .recipe-container.visible {
       display: block;
     }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1.1em;
+      line-height: 1.5;
+      margin: 20px 0;
+      resize: vertical;
+    }
+    .recipe-section {
+      margin-bottom: 20px;
+    }
+    .recipe-section h3 {
+      color: #2196f3;
+      margin-bottom: 10px;
+    }
+    .recipe-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .recipe-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .recipe-list li:last-child {
+      border-bottom: none;
+    }
+    .other-elements-list {
+      list-style-type: disc;
+      padding-left: 20px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Créer une recette depuis une photo</h1>
     
-    <div class="upload-area" id="uploadArea">
-      <div class="upload-icon">📷</div>
-      <p>Cliquez ou glissez une photo ici</p>
-      <input type="file" id="fileInput" accept="image/*" style="display: none">
+    <div id="initial-input">
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <p>Cliquez ou glissez une photo ici</p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none">
+      </div>
+
+      <img id="preview" src="" alt="Aperçu de l'image">
+      <button id="generateBtn" class="blue-btn" disabled>Générer la recette</button>
     </div>
 
-    <img id="preview" src="" alt="Aperçu de l'image">
-    <button id="generateBtn" class="blue-btn" disabled>Générer la recette</button>
-
     <div id="recipe" class="recipe-container"></div>
+
+    <div id="update-input" style="display: none; margin-top: 20px;">
+      <textarea id="update-prompt" placeholder="Que voulez-vous modifier sur cette recette? Par exemple dites, je n'ai pas de concombre, ou je n'aime pas le fromage, je veux plus de sauce etc..."></textarea>
+      <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -127,6 +168,42 @@
       }
     }
 
+    let currentRecipe = null;
+
+    function displayRecipe(data) {
+      const recipeDiv = document.getElementById('recipe');
+      recipeDiv.innerHTML = `
+        <div class="recipe-section">
+          <h3>Ingrédients</h3>
+          <ul class="recipe-list">
+            ${data.ingredients.map(i => `<li>${i}</li>`).join('')}
+          </ul>
+        </div>
+        <div class="recipe-section">
+          <h3>Étapes</h3>
+          <ul class="recipe-list">
+            ${data.steps.map(s => `<li>${s}</li>`).join('')}
+          </ul>
+        </div>
+        ${data.other_elements ? `
+          <div class="recipe-section">
+            <h3>Autres éléments</h3>
+            <ul class="other-elements-list">
+              ${data.other_elements.map(q => `<li>${q}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      `;
+      recipeDiv.classList.add('visible');
+    }
+
+    const updatePrompt = document.getElementById('update-prompt');
+    const updateBtn = document.getElementById('updateBtn');
+
+    updatePrompt.addEventListener('input', () => {
+      updateBtn.disabled = !updatePrompt.value.trim();
+    });
+
     generateBtn.addEventListener('click', async () => {
       const file = fileInput.files[0];
       if (!file) return;
@@ -148,36 +225,55 @@
           throw new Error(data.error);
         }
 
-        // Display recipe
-        const recipeDiv = document.getElementById('recipe');
-        recipeDiv.innerHTML = `
-          <div class="recipe-section">
-            <h3>Ingrédients</h3>
-            <ul class="recipe-list">
-              ${data.ingredients.map(i => `<li>${i}</li>`).join('')}
-            </ul>
-          </div>
-          <div class="recipe-section">
-            <h3>Étapes</h3>
-            <ul class="recipe-list">
-              ${data.steps.map(s => `<li>${s}</li>`).join('')}
-            </ul>
-          </div>
-          ${data.questions && data.questions.length > 0 ? `
-            <div class="recipe-section">
-              <h3>Questions supplémentaires</h3>
-              <ul class="questions-list">
-                ${data.questions.map(q => `<li>${q}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-        `;
-        recipeDiv.classList.add('visible');
+        currentRecipe = data;
+        displayRecipe(data);
+
+        // Show update input and hide initial input
+        document.getElementById('initial-input').style.display = 'none';
+        document.getElementById('update-input').style.display = 'block';
+        updatePrompt.value = '';
+
       } catch (error) {
         alert('Erreur: ' + error.message);
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = 'Générer la recette';
+      }
+    });
+
+    updateBtn.addEventListener('click', async () => {
+      const text = updatePrompt.value.trim();
+      if (!text || !currentRecipe) return;
+
+      updateBtn.disabled = true;
+      updateBtn.textContent = 'Modification en cours...';
+
+      try {
+        const response = await fetch('/update_recipe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            recipe: currentRecipe,
+            user_comments: text
+          })
+        });
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        currentRecipe = data;
+        displayRecipe(data);
+        updatePrompt.value = '';
+
+      } catch (error) {
+        alert('Erreur: ' + error.message);
+      } finally {
+        updateBtn.disabled = false;
+        updateBtn.textContent = 'Modifier la recette';
       }
     });
   </script>

@@ -120,3 +120,41 @@ Tu es un expert en proposition de recettes. Voici une demande de recette. Peux-t
       "other_elements": ["Ce n'est pas une demande de recette."]
   }
 """
+
+prompt_update = """
+Tu es un expert en proposition de recettes. Voici une proposition de recette. Peux-tu adapter la recette en fonction de la demande jointe ?:
+
+  Merci de structurer la réponse en utilisant un json avec les clés suivantes :
+  "ingredients", "steps", "other_elements"
+  Exemple de réponse :
+  {
+      "ingredients": [
+          "200g de farine",
+          "100g de sucre",
+          "2 œufs",
+          "1 sachet de levure chimique",
+          "10cl de lait"
+      ],
+      "steps": [
+          "1. Préchauffer le four à 180°C.",
+          "2. Mélanger la farine, le sucre et la levure.",
+          "3. Ajouter les œufs un à un, puis le lait.",
+          "4. Verser la pâte dans un moule.",
+          "5. Enfourner pendant 30 minutes."
+      ],
+      "other_elements": [
+          "Pour 4 personnes",
+          "Temps de préparation : 15 minutes",
+          "Temps de cuisson : 30 minutes",
+          "Température du four : 180°C"
+      ]
+  }
+
+  Si les informations ne sont pas suffisantes ou si ce n'est pas une demande de recette, merci de me le signaler clairement dans la réponse.
+  par exemple :
+  {
+      "ingredients": [],
+      "steps": [],
+      "other_elements": ["Ce n'est pas une demande de recette."]
+  }
+"""
