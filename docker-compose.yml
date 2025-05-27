@@ -5,12 +5,5 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
-    volumes:
-      - ./data:/app/data
-      - ./db:/app/db
     env_file:
       - .env
-
-volumes:
-  whisper_cache:
-    driver: local
