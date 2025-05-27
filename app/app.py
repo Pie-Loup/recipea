@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import tempfile
 from google import genai
-from prompt import prompt_template
+from prompts import prompt_voice, prompt_photo, prompt_text
 import io
 from pydub import AudioSegment
 import httpx
@@ -107,10 +107,8 @@ def feed():
 @app.route('/recipe_generator')
 @login_required
 def recipe_generator():
-    token = request.cookies.get("sb-access-token")
-    if not check_user_has_username(token):
-        return redirect(url_for('username_setup'))
-    return render_template('recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+    # Redirect old route to new create-recipe page
+    return redirect(url_for('create_recipe'))
 
 @app.route('/profile')
 @login_required
@@ -120,9 +118,9 @@ def profile():
         return redirect(url_for('username_setup'))
     return render_template('profile.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
 
-@app.route('/generate_recipe', methods=['POST'])
+@app.route('/generate_recipe_from_voice', methods=['POST'])
 @login_required
-def generate_recipe():
+def generate_recipe_from_voice():
     try:
         # Get all audio files from the request
         audio_files = request.files.getlist('audio')
@@ -165,7 +163,7 @@ def generate_recipe():
                     response = client.models.generate_content(
                         model="gemini-2.5-flash-preview-05-20",
                         config={"response_mime_type": "application/json"},
-                        contents=[audio_file, prompt_template]
+                        contents=[audio_file, prompt_voice]
                     )
 
                     if response.text:
@@ -186,6 +184,112 @@ def generate_recipe():
                         os.unlink(temp_audio.name)
                     except:
                         pass
+
+    except Exception as e:
+        return jsonify({'error': f'Error generating recipe: {str(e)}'}), 500
+
+@app.route('/create-recipe')
+@login_required
+def create_recipe():
+    token = request.cookies.get("sb-access-token")
+    return render_template('create_recipe.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/create-recipe/photo')
+@login_required
+def create_recipe_photo():
+    token = request.cookies.get("sb-access-token")
+    return render_template('photo_recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/create-recipe/text')
+@login_required
+def create_recipe_text():
+    token = request.cookies.get("sb-access-token")
+    return render_template('text_recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/voice-recipe')
+@login_required
+def voice_recipe():
+    token = request.cookies.get("sb-access-token")
+    return render_template('voice_recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/generate_recipe_from_photo', methods=['POST'])
+@login_required
+def generate_recipe_from_photo():
+    try:
+        # Get the photo file from the request
+        photo_file = request.files.get('photo')
+        if not photo_file:
+            return jsonify({'error': 'No photo provided'}), 400
+
+        # Create a temporary file for the photo
+        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_photo:
+            # Save the uploaded photo
+            photo_file.save(temp_photo.name)
+            
+            try:
+                # Upload the photo to Gemini
+                photo = client.files.upload(file=temp_photo.name)
+
+                # Generate recipe using Gemini API with photo and prompt
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-preview-05-20",
+                    config={"response_mime_type": "application/json"},
+                    contents=[photo, prompt_photo]
+                )
+
+                if response.text:
+                    try:
+                        # Convert Gemini's response text to a dictionary and return it
+                        recipe_json = eval(response.text)
+                        if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+                            return jsonify({'error': 'Invalid recipe format'}), 500
+                        return jsonify(recipe_json)
+                    except Exception as e:
+                        return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
+                else:
+                    return jsonify({'error': 'No response from Gemini API'}), 500
+
+            finally:
+                # Clean up the temporary file
+                try:
+                    os.unlink(temp_photo.name)
+                except:
+                    pass
+
+    except Exception as e:
+        return jsonify({'error': f'Error generating recipe: {str(e)}'}), 500
+
+@app.route('/generate_recipe_from_text', methods=['POST'])
+@login_required
+def generate_recipe_from_text():
+    try:
+        # Get the text input from the request
+        text_input = request.json.get('text')
+        if not text_input:
+            return jsonify({'error': 'No text provided'}), 400
+
+        try:
+            # Generate recipe using Gemini API with text and prompt
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-preview-05-20",
+                config={"response_mime_type": "application/json"},
+                contents=[text_input, prompt_text]
+            )
+
+            if response.text:
+                try:
+                    # Convert Gemini's response text to a dictionary and return it
+                    recipe_json = eval(response.text)
+                    if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+                        return jsonify({'error': 'Invalid recipe format'}), 500
+                    return jsonify(recipe_json)
+                except Exception as e:
+                    return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
+            else:
+                return jsonify({'error': 'No response from Gemini API'}), 500
+
+        except Exception as e:
+            return jsonify({'error': f'Error calling Gemini API: {str(e)}'}), 500
 
     except Exception as e:
         return jsonify({'error': f'Error generating recipe: {str(e)}'}), 500

@@ -98,7 +98,7 @@ async function generateRecipe() {
       formData.append('audio', blob, `audio${i+1}.wav`);
     });
     
-    const res = await fetch('/generate_recipe', {
+    const res = await fetch('/generate_recipe_from_voice', {
       method: 'POST',
       body: formData
     });

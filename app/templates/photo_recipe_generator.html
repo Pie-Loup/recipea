@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Créer une recette depuis une photo</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
+    h1 { text-align: center; color: #333; }
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-area:hover {
+      border-color: #2196f3;
+    }
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    #preview {
+      max-width: 100%;
+      margin: 20px 0;
+      border-radius: 8px;
+      display: none;
+    }
+    .blue-btn {
+      display: block;
+      margin: 0 auto 24px auto;
+      padding: 16px 32px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .blue-btn:active { background: #1976d2; }
+    .blue-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .recipe-container {
+      margin-top: 24px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      display: none;
+    }
+    .recipe-container.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Créer une recette depuis une photo</h1>
+    
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📷</div>
+      <p>Cliquez ou glissez une photo ici</p>
+      <input type="file" id="fileInput" accept="image/*" style="display: none">
+    </div>
+
+    <img id="preview" src="" alt="Aperçu de l'image">
+    <button id="generateBtn" class="blue-btn" disabled>Générer la recette</button>
+
+    <div id="recipe" class="recipe-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "{{ supabase_url }}";
+    const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Check authentication
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.href = '/';
+      }
+    });
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const generateBtn = document.getElementById('generateBtn');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#2196f3';
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.style.borderColor = '#ccc';
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#ccc';
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          generateBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    generateBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Génération en cours...';
+
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      try {
+        const response = await fetch('/generate_recipe_from_photo', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // Display recipe
+        const recipeDiv = document.getElementById('recipe');
+        recipeDiv.innerHTML = `
+          <div class="recipe-section">
+            <h3>Ingrédients</h3>
+            <ul class="recipe-list">
+              ${data.ingredients.map(i => `<li>${i}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="recipe-section">
+            <h3>Étapes</h3>
+            <ul class="recipe-list">
+              ${data.steps.map(s => `<li>${s}</li>`).join('')}
+            </ul>
+          </div>
+          ${data.questions && data.questions.length > 0 ? `
+            <div class="recipe-section">
+              <h3>Questions supplémentaires</h3>
+              <ul class="questions-list">
+                ${data.questions.map(q => `<li>${q}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        `;
+        recipeDiv.classList.add('visible');
+      } catch (error) {
+        alert('Erreur: ' + error.message);
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Générer la recette';
+      }
+    });
+  </script>
+</body>
+</html>
