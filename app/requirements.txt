@@ -7,3 +7,4 @@ google-genai
 pydub
 PyJWT
 httpx
+supabase

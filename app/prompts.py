@@ -1,14 +1,16 @@
 prompt_voice = """
 Tu es un expert en structuration de recettes. Voici un clip audio de recette. Peux-tu me retourner :
+- Un titre pour la recette,
 - La liste des ingrédients (avec quantités si disponibles),
 - Les étapes de préparation, claires et numérotées,
 - Les questions éventuelles que tu pourrais te poser si des éléments manquent ou sont ambigus ?
 
 
   Merci de structurer la réponse en utilisant un json avec les clés suivantes :
-  "ingredients", "steps", "questions"
+  "title", "ingredients", "steps", "questions"
   Exemple de réponse :
   {
+      "title": "Gâteau au yaourt",
       "ingredients": [
           "200g de farine",
           "100g de sucre",
@@ -27,28 +29,33 @@ Tu es un expert en structuration de recettes. Voici un clip audio de recette. Pe
           "Quelle taille de moule utiliser ?",
           "Faut-il beurrer le moule avant de verser la pâte ?",
           "Peut-on ajouter un arôme (ex : vanille) ?"
-      ]
+      ],
+      "is_recipe": true
   }
 
   Si les informations ne sont pas suffisantes ou si ce n'est pas un clip de recette, merci de me le signaler clairement dans la réponse.
   par exemple :
   {
+      "title": "",
       "ingredients": [],
       "steps": [],
-      "questions": ["Ce clip ne semble pas être une recette."]
+      "questions": [],
+      "is_recipe": false
   }
 """
 
 prompt_photo = """
 Tu es un expert en structuration de recettes. Voici une photo de recette. Peux-tu me retourner :
+- Un titre pour la recette,
 - La liste des ingrédients (avec quantités si disponibles),
 - Les étapes de préparation, claires et numérotées,
 - D'autres éléments pertinents de la recette (ex : temps de cuisson, température, etc.),
 
   Merci de structurer la réponse en utilisant un json avec les clés suivantes :
-  "ingredients", "steps", "other_elements"
+  "title", "ingredients", "steps", "other_elements"
   Exemple de réponse :
   {
+      "title": "Gâteau au yaourt",
       "ingredients": [
           "200g de farine",
           "100g de sucre",
@@ -68,28 +75,33 @@ Tu es un expert en structuration de recettes. Voici une photo de recette. Peux-t
           "Temps de préparation : 15 minutes",
           "Temps de cuisson : 30 minutes",
           "Température du four : 180°C"
-      ]
+      ],
+      "is_recipe": true
   }
 
   Si les informations ne sont pas suffisantes ou si ce n'est pas un photo de recette, merci de me le signaler clairement dans la réponse.
   par exemple :
   {
+      "title": "",
       "ingredients": [],
       "steps": [],
-      "other_elements": ["Cet photo ne semble pas être une recette."]
+      "other_elements": [],
+      "is_recipe": false
   }
 """
 
 prompt_text = """
 Tu es un expert en proposition de recettes. Voici une demande de recette. Peux-tu me retourner :
+- Un titre pour la recette,
 - La liste des ingrédients (avec quantités si disponibles),
 - Les étapes de préparation, claires et numérotées,
 - D'autres éléments pertinents de la recette (ex : temps de cuisson, température, etc.),
 
   Merci de structurer la réponse en utilisant un json avec les clés suivantes :
-  "ingredients", "steps", "other_elements"
+  "title", "ingredients", "steps", "other_elements"
   Exemple de réponse :
   {
+      "title": "Gâteau au yaourt",
       "ingredients": [
           "200g de farine",
           "100g de sucre",
@@ -109,15 +121,18 @@ Tu es un expert en proposition de recettes. Voici une demande de recette. Peux-t
           "Temps de préparation : 15 minutes",
           "Temps de cuisson : 30 minutes",
           "Température du four : 180°C"
-      ]
+      ],
+      "is_recipe": true
   }
 
   Si les informations ne sont pas suffisantes ou si ce n'est pas une demande de recette, merci de me le signaler clairement dans la réponse.
   par exemple :
   {
+      "title": "",
       "ingredients": [],
       "steps": [],
-      "other_elements": ["Ce n'est pas une demande de recette."]
+      "other_elements": [],
+      "is_recipe": false
   }
 """
 
@@ -125,9 +140,10 @@ prompt_update = """
 Tu es un expert en proposition de recettes. Voici une proposition de recette. Peux-tu adapter la recette en fonction de la demande jointe ?:
 
   Merci de structurer la réponse en utilisant un json avec les clés suivantes :
-  "ingredients", "steps", "other_elements"
+  "title", "ingredients", "steps", "other_elements"
   Exemple de réponse :
   {
+      "title": "Gâteau au yaourt",
       "ingredients": [
           "200g de farine",
           "100g de sucre",
@@ -147,14 +163,17 @@ Tu es un expert en proposition de recettes. Voici une proposition de recette. Pe
           "Temps de préparation : 15 minutes",
           "Temps de cuisson : 30 minutes",
           "Température du four : 180°C"
-      ]
+      ],
+      "is_recipe": true
   }
 
   Si les informations ne sont pas suffisantes ou si ce n'est pas une demande de recette, merci de me le signaler clairement dans la réponse.
   par exemple :
   {
+      "title": "",
       "ingredients": [],
       "steps": [],
-      "other_elements": ["Ce n'est pas une demande de recette."]
+      "other_elements": [],
+      "is_recipe": false
   }
 """

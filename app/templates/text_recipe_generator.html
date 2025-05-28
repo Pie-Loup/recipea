@@ -8,6 +8,11 @@
     body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
     h1 { text-align: center; color: #333; }
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
     textarea {
       width: 100%;
       min-height: 200px;
@@ -84,7 +89,10 @@
 
     <div id="update-input" style="display: none; margin-top: 20px;">
       <textarea id="update-prompt" placeholder="Que voulez-vous modifier sur cette recette? Par exemple, je n'ai pas de concombre, ou je n'aime pas le fromage, je veux plus de sauce etc..."></textarea>
-      <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
+      <div class="button-group">
+        <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
+        <button id="saveBtn" class="blue-btn" style="display: none;">Poster ma sauce</button>
+      </div>
     </div>
   </div>
 
@@ -105,7 +113,32 @@
 
     function displayRecipe(data) {
       const recipeDiv = document.getElementById('recipe');
+      
+      if (!data.is_recipe) {
+        recipeDiv.innerHTML = `
+          <div class="recipe-section" style="text-align: center; color: #666;">
+            <p>Désolé, je ne peux pas créer une recette à partir de ce texte. Pourriez-vous me donner plus de détails sur la recette que vous souhaitez ?</p>
+          </div>
+        `;
+        recipeDiv.classList.add('visible');
+        
+        // Reset the text input
+        document.getElementById('prompt').value = '';
+        document.getElementById('initial-input').style.display = 'block';
+        document.getElementById('update-input').style.display = 'none';
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Générer la recette';
+        return;
+      }
+
+      // Only continue with recipe display and update form if it's a valid recipe
+      document.getElementById('initial-input').style.display = 'none';
+      document.getElementById('update-input').style.display = 'block';
+
       recipeDiv.innerHTML = `
+        <div class="recipe-section">
+          <h2 style="color: #1976d2; margin-bottom: 24px; text-align: center;">${data.title || 'Recette'}</h2>
+        </div>
         <div class="recipe-section">
           <h3>Ingrédients</h3>
           <ul class="recipe-list">
@@ -134,6 +167,12 @@
     const generateBtn = document.getElementById('generateBtn');
     const updatePrompt = document.getElementById('update-prompt');
     const updateBtn = document.getElementById('updateBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // Function to enable save button
+    function showSaveButton() {
+      saveBtn.style.display = 'block';
+    }
 
     prompt.addEventListener('input', () => {
       generateBtn.disabled = !prompt.value.trim();
@@ -167,10 +206,13 @@
         currentRecipe = data;
         displayRecipe(data);
 
-        // Show update input and hide initial input
-        document.getElementById('initial-input').style.display = 'none';
-        document.getElementById('update-input').style.display = 'block';
-        updatePrompt.value = '';
+        // Show/hide appropriate inputs based on whether it's a recipe
+        if (data.is_recipe) {
+          document.getElementById('initial-input').style.display = 'none';
+          document.getElementById('update-input').style.display = 'block';
+          updatePrompt.value = '';
+          showSaveButton(); // Show the save button when a recipe is generated
+        }
 
       } catch (error) {
         alert('Erreur: ' + error.message);
@@ -207,12 +249,52 @@
         currentRecipe = data;
         displayRecipe(data);
         updatePrompt.value = '';
+        showSaveButton(); // Show the save button after updating recipe
 
       } catch (error) {
         alert('Erreur: ' + error.message);
       } finally {
         updateBtn.disabled = false;
         updateBtn.textContent = 'Modifier la recette';
+      }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      if (!currentRecipe) return;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Sauvegarde en cours...';
+
+      try {
+        const recipeToSave = {
+          title: currentRecipe.title,
+          ingredients: currentRecipe.ingredients,
+          steps: currentRecipe.steps,
+          other_elements: currentRecipe.other_elements || [],
+          origin: 'text_ia'
+        };
+
+        const response = await fetch('/save_recipe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(recipeToSave)
+        });
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        alert('Votre recette a été sauvegardée avec succès !');
+        window.location.href = '/feed'; // Redirect to feed after successful save
+
+      } catch (error) {
+        alert('Erreur lors de la sauvegarde : ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Poster ma sauce';
       }
     });
   </script>

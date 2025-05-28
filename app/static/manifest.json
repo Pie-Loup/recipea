@@ -1,7 +1,7 @@
 {
   "name": "Sauce",
   "short_name": "Sauce",
-  "description": "Your recipe sharing app",
+  "description": "Application de partage de recettes",
   "start_url": "/feed",
   "scope": "/",
   "display": "standalone",

@@ -108,8 +108,29 @@ async function generateRecipe() {
       throw new Error(data.error);
     }
     
+    if (!data.is_recipe) {
+      recipeDiv.innerHTML = `
+        <div class="recipe-section" style="text-align: center; color: #666;">
+          <p>Désolé, je ne peux pas créer une recette à partir de cet enregistrement. Pourriez-vous réessayer en décrivant la recette plus en détail ?</p>
+        </div>
+      `;
+      
+      // Reset audio recordings
+      audioBlobs = [];
+      audioList.innerHTML = '';
+      recipeBtn.disabled = true;
+      return;
+    }
+
     // Format the recipe data
     let html = '';
+    
+    // Title section
+    html += `
+      <div class="recipe-section">
+        <h2 style="color: #1976d2; margin-bottom: 24px; text-align: center;">${data.title || 'Recette'}</h2>
+      </div>
+    `;
     
     // Ingredients section
     if (data.ingredients && data.ingredients.length > 0) {

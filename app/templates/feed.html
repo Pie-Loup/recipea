@@ -7,25 +7,162 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#2196f3">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Sauce">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <style>
         body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
-        .feed-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
-        h1 { text-align: center; }
+        .feed-container { max-width: 700px; margin: 40px auto; }
+        h1 { text-align: center; margin-bottom: 32px; }
+        
+        /* Navigation styles */
+        .nav-container { 
+            display: flex; 
+            justify-content: center; 
+            margin-bottom: 20px; 
+            gap: 10px; 
+        }
+        
+        /* Button styles */
+        .new-recipe-btn { 
+            display: block; 
+            padding: 12px 32px; 
+            background: #2196f3; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 1.1em; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+        .new-recipe-btn:hover { 
+            background: #1976d2; 
+        }
+        
+        /* PWA prompt styles */
+        .pwa-prompt {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2196f3;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .pwa-prompt button {
+            background: white;
+            color: #2196f3;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+        .pwa-prompt button:hover {
+            background: #f5f5f5;
+        }
+
+        /* Feed styles */
         .feed-list { list-style: none; padding: 0; }
-        .feed-item { padding: 16px; border-bottom: 1px solid #eee; }
-        .feed-item:last-child { border-bottom: none; }
-        .new-recipe-btn { display: block; margin: 24px auto 0 auto; padding: 12px 32px; background: #2196f3; color: #fff; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
-        .new-recipe-btn:active { background: #1976d2; }
-        /* Navigation bar styles */
-        .nav-container { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
+        .feed-item { 
+            background: #fff; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1); 
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .feed-item-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .feed-item-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        .feed-item-user {
+            font-weight: bold;
+            margin: 0;
+        }
+        .feed-item-date {
+            color: #666;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        .feed-item-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+        .feed-item-content {
+            padding: 16px;
+        }
+        .feed-item-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+        }
+        .feed-item-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .tag-status {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .tag-origin {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .tag-type {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .feed-item-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .action-button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .action-button:hover {
+            color: #2196f3;
+        }
     </style>
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div class="pwa-prompt" id="pwaPrompt">
+        📱 Installez Sauce sur votre téléphone !
+        <button onclick="installPWA()">Installer</button>
+        <button onclick="document.getElementById('pwaPrompt').style.display = 'none'">Plus tard</button>
+    </div>
     <div class="feed-container">
         <div class="nav-container">
             <button class="new-recipe-btn" onclick="window.location.href='/profile'" style="margin:0">Mon Profil</button>
@@ -90,8 +227,82 @@
             }
         });
         
-        // Placeholder: You can fetch and display user recipes here
-        document.getElementById('feedList').innerHTML = '<li class="feed-item">Aucune sauce pour le moment. Tu dois être sec comme un grain de riz. 😏</li>';
+        // Format date to a readable string
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (days > 7) {
+                return date.toLocaleDateString('fr-FR');
+            } else if (days > 0) {
+                return `Il y a ${days} jour${days > 1 ? 's' : ''}`;
+            } else if (hours > 0) {
+                return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
+            } else if (minutes > 0) {
+                return `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
+            } else {
+                return 'À l\'instant';
+            }
+        }
+
+        // Fetch and display recipes
+        async function fetchRecipes() {
+            try {
+                const response = await fetch('/api/feed/recipes');
+                if (!response.ok) throw new Error('Failed to fetch recipes');
+                
+                const recipes = await response.json();
+                if (!recipes.length) {
+                    document.getElementById('feedList').innerHTML = '<li class="feed-item">Aucune sauce pour le moment. Tu dois être sec comme un grain de riz. 😏</li>';
+                    return;
+                }
+
+                const recipesHtml = recipes.map(recipe => `
+                    <li class="feed-item">                                <div class="feed-item-header">
+                                    <img src="/static/favicon.png" alt="${recipe.user_profiles ? recipe.user_profiles.username : 'Utilisateur inconnu'}" />
+                                    <div>
+                                        <p class="feed-item-user">@${recipe.user_profiles ? recipe.user_profiles.username : 'Utilisateur inconnu'}</p>
+                                        <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
+                                    </div>
+                                </div>
+                        <img class="feed-item-image" src="/static/favicon.png" alt="${recipe.title}" />
+                        <div class="feed-item-content">
+                            <h2 class="feed-item-title">${recipe.title}</h2>
+                            <div class="feed-item-tags">
+                                <span class="tag tag-status">${recipe.state}</span>
+                                <span class="tag tag-origin">${recipe.origin}</span>
+                                <span class="tag tag-type">recette</span>
+                            </div>
+                            <div class="feed-item-actions">
+                                <button class="action-button">
+                                    ❤️ J'aime
+                                </button>
+                                <button class="action-button">
+                                    🔁 Repost
+                                </button>
+                                <button class="action-button">
+                                    💬 Commenter
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                `).join('');
+
+                document.getElementById('feedList').innerHTML = recipesHtml;
+            } catch (error) {
+                console.error('Error fetching recipes:', error);
+                document.getElementById('feedList').innerHTML = '<li class="feed-item">Erreur lors du chargement des recettes</li>';
+            }
+        }
+
+        // Initial fetch
+        fetchRecipes();
+
         // Logout logic
         document.getElementById('logoutBtn').onclick = async function() {
             await client.auth.signOut();
@@ -110,6 +321,56 @@
                         console.log('ServiceWorker registration failed: ', err);
                     });
             });
+        }
+    </script>
+    <script>
+        // PWA Installation
+        let deferredPrompt;
+        const pwaPrompt = document.getElementById('pwaPrompt');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            
+            // Check if user has already dismissed or installed
+            const pwaInstalled = localStorage.getItem('pwaInstalled');
+            if (!pwaInstalled) {
+                pwaPrompt.style.display = 'block';
+            }
+        });
+
+        // Installation must be triggered by user gesture
+        async function installPWA() {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the PWA installation');
+                    localStorage.setItem('pwaInstalled', 'true');
+                }
+                
+                // Clear the deferredPrompt variable
+                deferredPrompt = null;
+            }
+            // Hide the prompt regardless of outcome
+            pwaPrompt.style.display = 'none';
+        }
+
+        // Handle successful installation
+        window.addEventListener('appinstalled', (evt) => {
+            localStorage.setItem('pwaInstalled', 'true');
+            pwaPrompt.style.display = 'none';
+        });
+
+        // Check if app is launched in standalone mode (already installed)
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            localStorage.setItem('pwaInstalled', 'true');
+            pwaPrompt.style.display = 'none';
         }
     </script>
 </body>

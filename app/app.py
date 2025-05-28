@@ -3,10 +3,13 @@ import os
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import tempfile
 from google import genai
-from prompts import prompt_voice, prompt_photo, prompt_text, prompt_update
-import io
+import json
 from pydub import AudioSegment
+from functools import wraps
+import jwt
 import httpx
+from prompts import prompt_voice, prompt_text, prompt_photo, prompt_update
+from supabase import create_client, Client as SupabaseClient
 
 load_dotenv()
 
@@ -34,7 +37,6 @@ def verify_supabase_jwt(token):
     print("Verifying token:", token[:20] + "..." if token else None)  # Debug log
     # You can use PyJWT to verify, or call Supabase's /user endpoint
     # Here is a simple example using PyJWT:
-    import jwt
     try:
         # Note: Supabase JWTs use HS256 algorithm and have specific claims
         payload = jwt.decode(
@@ -169,9 +171,12 @@ def generate_recipe_from_voice():
                     if response.text:
                         try:
                             # Convert Gemini's response text to a dictionary and return it directly
-                            recipe_json = eval(response.text)
-                            if not all(key in recipe_json for key in ['ingredients', 'steps', 'questions']):
+                            recipe_json = json.loads(response.text)
+                            if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'questions', 'is_recipe']):
                                 return jsonify({'error': 'Invalid recipe format'}), 500
+                            # If it's not a recipe, return directly to ask user to try again
+                            if not recipe_json.get('is_recipe', False):
+                                return jsonify(recipe_json)  # Frontend will show message to try again
                             return jsonify(recipe_json)
                         except Exception as e:
                             return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
@@ -240,9 +245,12 @@ def generate_recipe_from_photo():
                 if response.text:
                     try:
                         # Convert Gemini's response text to a dictionary and return it
-                        recipe_json = eval(response.text)
-                        if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+                        recipe_json = json.loads(response.text)
+                        if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'other_elements', 'is_recipe']):
                             return jsonify({'error': 'Invalid recipe format'}), 500
+                        # If it's not a recipe, return directly to ask user to try again
+                        if not recipe_json.get('is_recipe', False):
+                            return jsonify(recipe_json)  # Frontend will show message to try again
                         return jsonify(recipe_json)
                     except Exception as e:
                         return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
@@ -279,9 +287,12 @@ def generate_recipe_from_text():
             if response.text:
                 try:
                     # Convert Gemini's response text to a dictionary and return it
-                    recipe_json = eval(response.text)
-                    if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+                    recipe_json = json.loads(response.text)
+                    if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'other_elements', 'is_recipe']):
                         return jsonify({'error': 'Invalid recipe format'}), 500
+                    # If it's not a recipe, return directly to ask user to try again
+                    if not recipe_json.get('is_recipe', False):
+                        return jsonify(recipe_json)  # Frontend will show message to try again
                     return jsonify(recipe_json)
                 except Exception as e:
                     return jsonify({'error': f'Invalid JSON format: {str(e)}'}), 500
@@ -330,7 +341,7 @@ Autres éléments:
             if response.text:
                 try:
                     # Convert Gemini's response text to a dictionary and return it
-                    recipe_json = eval(response.text)
+                    recipe_json = json.loads(response.text)
                     if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
                         return jsonify({'error': 'Invalid recipe format'}), 500
                     return jsonify(recipe_json)
@@ -344,6 +355,83 @@ Autres éléments:
 
     except Exception as e:
         return jsonify({'error': f'Error updating recipe: {str(e)}'}), 500
+
+@app.route('/save_recipe', methods=['POST'])
+@login_required
+def save_recipe():
+    try:
+        # Get recipe data from request
+        data = request.json
+        if not data or not all(key in data for key in ['title', 'ingredients', 'steps', 'origin']):
+            return jsonify({'error': 'Missing required recipe data'}), 400
+
+        # Get the user's supabase JWT token
+        token = request.cookies.get("sb-access-token")
+        if not token:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        # Get user id from JWT token using the verify_supabase_jwt function
+        decoded = verify_supabase_jwt(token)
+        if not decoded:
+            return jsonify({'error': 'Invalid authentication token'}), 401
+            
+        user_id = decoded.get('sub')
+        if not user_id:
+            return jsonify({'error': 'User ID not found in token'}), 401
+
+        # Setup Supabase client with auth headers
+        supabase_client = create_client(supabase_url, supabase_anon_key)
+        # Set the Authorization header for the request
+        supabase_client.postgrest.auth(token)
+
+        # Insert the recipe into the database
+        recipe_data = {
+            'title': data['title'],
+            'ingredients': data['ingredients'],
+            'steps': data['steps'],
+            'other_elements': data.get('other_elements', []),
+            'state': 'to_test',
+            'origin': data['origin'],
+            'user_id': user_id
+        }
+
+        result = supabase_client.table('recipes').insert(recipe_data).execute()
+        
+        if result.data:
+            return jsonify({'success': True, 'recipe_id': result.data[0]['recipe_id']})
+        else:
+            return jsonify({'error': 'Failed to save recipe'}), 500
+
+    except Exception as e:
+        return jsonify({'error': f'Error saving recipe: {str(e)}'}), 500
+
+@app.route('/api/feed/recipes', methods=['GET'])
+@login_required
+def get_feed_recipes():
+    try:
+        # Get the user's supabase JWT token
+        token = request.cookies.get("sb-access-token")
+        if not token:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        # Setup Supabase client with auth headers
+        supabase_client = create_client(supabase_url, supabase_anon_key)
+        supabase_client.postgrest.auth(token)
+
+        # Fetch the 10 most recent recipes with author information
+        result = supabase_client.table('recipes') \
+            .select('*, user_profiles!user_id(username)') \
+            .order('created_at', desc=True) \
+            .limit(10) \
+            .execute()
+        
+        if not result.data:
+            return jsonify([])
+
+        return jsonify(result.data)
+
+    except Exception as e:
+        return jsonify({'error': f'Error fetching recipes: {str(e)}'}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
