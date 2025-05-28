@@ -7,18 +7,72 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .login-btn { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
         .google { background: #4285F4; color: #fff; }
         .facebook { background: #3b5998; color: #fff; }
+        .email-form { margin: 1rem 0; }
+        .email-form input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .submit-btn { background: #2196f3; color: #fff; }
+        .error { color: #e53935; margin: 0.5rem 0; }
+        .tabs { display: flex; margin-bottom: 1rem; }
+        .tab { flex: 1; padding: 0.75rem; text-align: center; cursor: pointer; border-bottom: 2px solid #ddd; font-size: 0.9rem; }
+        .tab.active { border-bottom: 2px solid #2196f3; color: #2196f3; }
+        .form-container { display: none; }
+        .form-container.active { display: block; }
+        .divider { margin: 1rem 0; text-align: center; position: relative; }
+        .divider:before, .divider:after { content: ""; position: absolute; height: 1px; width: 45%; top: 50%; background: #ddd; }
+        .divider:before { left: 0; }
+        .divider:after { right: 0; }
+        .divider span { background: #fff; padding: 0 10px; color: #666; }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Login to Sauce</h2>
-        <button class="login-btn google" onclick="loginWithProvider('google')">Login with Google</button>
-        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Login with Facebook</button>
+        <h2>Bienvenue sur Sauce</h2>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">Se connecter</div>
+            <div class="tab" onclick="switchTab('signup')">S'inscrire</div>
+            <div class="tab" onclick="switchTab('reset')">Mot de passe oublié</div>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="form-container active">
+            <div class="email-form">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Mot de passe" required>
+                <button class="login-btn submit-btn" onclick="handleLogin()">Se connecter</button>
+                <div id="loginError" class="error"></div>
+            </div>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupForm" class="form-container">
+            <div class="email-form">
+                <input type="email" id="signupEmail" placeholder="Email" required>
+                <input type="password" id="signupPassword" placeholder="Mot de passe" required>
+                <input type="password" id="confirmPassword" placeholder="Confirmer le mot de passe" required>
+                <button class="login-btn submit-btn" onclick="handleSignup()">S'inscrire</button>
+                <div id="signupError" class="error"></div>
+            </div>
+        </div>
+
+        <!-- Reset Password Form -->
+        <div id="resetForm" class="form-container">
+            <div class="email-form">
+                <input type="email" id="resetEmail" placeholder="Email" required>
+                <button class="login-btn submit-btn" onclick="handleResetPassword()">Réinitialiser le mot de passe</button>
+                <div id="resetError" class="error"></div>
+            </div>
+        </div>
+
+        <div class="divider">
+            <span>ou</span>
+        </div>
+
+        <button class="login-btn google" onclick="loginWithProvider('google')">Continuer avec Google</button>
+        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Continuer avec Facebook</button>
     </div>
     <script>
         // Supabase project URL and anon key
@@ -26,6 +80,133 @@
         const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
         const SITE_URL = "{{ site_url }}";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function switchTab(tabName) {
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            if (tabName === 'login') {
+                document.querySelector('.tab:first-child').classList.add('active');
+            } else if (tabName === 'signup') {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+            } else if (tabName === 'reset') {
+                document.querySelector('.tab:last-child').classList.add('active');
+            }
+            
+            // Hide all forms first
+            document.querySelectorAll('.form-container').forEach(form => form.classList.remove('active'));
+            
+            // Show the selected form
+            document.getElementById(`${tabName}Form`).classList.add('active');
+            
+            // Clear all errors
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('signupError').textContent = '';
+            document.getElementById('resetError').textContent = '';
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+            
+            if (!email || !password) {
+                errorElement.textContent = 'Veuillez remplir tous les champs';
+                return;
+            }
+
+            try {
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    if (error.message === 'Email not confirmed') {
+                        errorElement.textContent = 'Veuillez confirmer votre email avant de vous connecter.';
+                    } else {
+                        throw error;
+                    }
+                }
+                
+                // Auth state change listener will handle the redirect
+            } catch (error) {
+                errorElement.textContent = error.message === 'Invalid login credentials'
+                    ? 'Email ou mot de passe incorrect'
+                    : 'Une erreur est survenue. Veuillez réessayer.';
+            }
+        }
+
+        async function handleSignup() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorElement = document.getElementById('signupError');
+            
+            if (!email || !password || !confirmPassword) {
+                errorElement.textContent = 'Veuillez remplir tous les champs';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorElement.textContent = 'Les mots de passe ne correspondent pas';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorElement.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                return;
+            }
+
+            try {
+                const { data, error } = await client.auth.signUp({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) throw error;
+
+                // Show success message with email verification notice
+                document.getElementById('signupForm').innerHTML = `
+                    <div style="text-align: center; padding: 1rem;">
+                        <h3>Inscription réussie !</h3>
+                        <p>Un email de confirmation vous a été envoyé.</p>
+                        <p>Veuillez cliquer sur le lien dans l'email pour activer votre compte.</p>
+                    </div>`;
+            } catch (error) {
+                errorElement.textContent = error.message === 'User already registered'
+                    ? 'Cet email est déjà utilisé'
+                    : 'Une erreur est survenue. Veuillez réessayer.';
+            }
+        }
+
+        async function handleResetPassword() {
+            const email = document.getElementById('resetEmail').value;
+            const errorElement = document.getElementById('resetError');
+            
+            if (!email) {
+                errorElement.textContent = 'Veuillez entrer votre email';
+                return;
+            }
+
+            try {
+                const { data, error } = await client.auth.resetPasswordForEmail(email, {
+                    redirectTo: SITE_URL + '/reset-password',
+                });
+
+                if (error) throw error;
+
+                // Show success message
+                document.getElementById('resetForm').innerHTML = `
+                    <div style="text-align: center; padding: 1rem;">
+                        <h3>Email envoyé !</h3>
+                        <p>Consultez votre boîte mail pour réinitialiser votre mot de passe.</p>
+                        <p>Pensez à vérifier vos spams.</p>
+                    </div>`;
+
+            } catch (error) {
+                errorElement.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+            }
+        }
 
         async function loginWithProvider(provider) {
             const { data, error } = await client.auth.signInWithOAuth({
@@ -53,10 +234,64 @@
             }
         });
 
-        async function loginWithProvider(provider) {
-            const { data, error } = await client.auth.signInWithOAuth({ provider });
-            if (error) alert('Error: ' + error.message);
-            // On success, Supabase will redirect to your site with a session
+        // Check if we have a recover token in the URL (for password reset)
+        const params = new URLSearchParams(window.location.search);
+        const accessToken = params.get('access_token');
+        const type = params.get('type');
+
+        if (accessToken && type === 'recovery') {
+            // Show password reset form
+            document.querySelector('.login-container').innerHTML = `
+                <h2>Nouveau mot de passe</h2>
+                <div class="email-form">
+                    <input type="password" id="newPassword" placeholder="Nouveau mot de passe" required>
+                    <input type="password" id="confirmNewPassword" placeholder="Confirmer le mot de passe" required>
+                    <button class="login-btn submit-btn" onclick="handlePasswordUpdate()">Mettre à jour</button>
+                    <div id="updateError" class="error"></div>
+                </div>`;
+        }
+
+        async function handlePasswordUpdate() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            const errorElement = document.getElementById('updateError');
+
+            if (!newPassword || !confirmPassword) {
+                errorElement.textContent = 'Veuillez remplir tous les champs';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorElement.textContent = 'Les mots de passe ne correspondent pas';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                errorElement.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+                return;
+            }
+
+            try {
+                const { data, error } = await client.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (error) throw error;
+
+                // Show success message and redirect
+                document.querySelector('.login-container').innerHTML = `
+                    <div style="text-align: center; padding: 1rem;">
+                        <h3>Mot de passe mis à jour !</h3>
+                        <p>Vous allez être redirigé vers la page de connexion...</p>
+                    </div>`;
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                errorElement.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+            }
         }
     </script>
 </body>
