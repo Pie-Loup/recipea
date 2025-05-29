@@ -28,7 +28,7 @@ h1 {
     transition: border-color 0.2s;
 }
 .upload-area:hover {
-    border-color: #2196f3;
+    border-color: var(--primary-color);
 }
 .upload-icon {
     font-size: 48px;
@@ -46,7 +46,7 @@ h1 {
     display: block;
     margin: 0 auto 24px auto;
     padding: 16px 32px;
-    background: #2196f3;
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 8px;
@@ -55,7 +55,7 @@ h1 {
     transition: background 0.2s;
 }
 .blue-btn:active { 
-    background: #1976d2; 
+    background: var(--primary-color-dark); 
 }
 .blue-btn:disabled {
     background: #ccc;
@@ -92,12 +92,12 @@ textarea {
     margin-bottom: 20px;
 }
 .recipe-section h2 {
-    color: #1976d2; 
+    color: var(--primary-color-dark); 
     margin-bottom: 24px; 
     text-align: center;
 }
 .recipe-section h3 {
-    color: #2196f3;
+    color: var(--primary-color);
     margin-bottom: 10px;
 }
 .recipe-list {

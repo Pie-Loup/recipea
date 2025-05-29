@@ -8,11 +8,11 @@
     width: 120px;
     height: 120px;
     border-radius: 60px;
-    background: orange;
+    background: var(--record-btn-color);
     color: white;
     font-size: 1.5em;
     border: none;
-    box-shadow: 0 4px 16px #ff980033;
+    box-shadow: 0 4px 16px var(--recode-btn-shadow);
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
     outline: none;
@@ -20,7 +20,7 @@
 }
 
 .rec-btn.recording {
-    background: #ff5722;
+    background: var(--record-btn-active);
     box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033;
     animation: pulse 1s infinite;
 }

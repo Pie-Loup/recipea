@@ -14,18 +14,18 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: #2196f3;
-    color: white;
+    background: var(--background-color);
+    color: var(--white);
     padding: 16px 24px;
     border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 12px var(--shadow-color);
     z-index: 1000;
     text-align: center;
 }
 
 .pwa-prompt button {
     background: white;
-    color: #2196f3;
+    color: var(--primary-color);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -34,7 +34,7 @@
 }
 
 .pwa-prompt button:hover {
-    background: #f5f5f5;
+    background: var(--primary-color-dark);
 }
 
 /* Feed styles */
@@ -46,7 +46,7 @@
 .feed-item { 
     background: #fff; 
     border-radius: 12px; 
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1); 
+    box-shadow: 0 2px 12px var(--shadow-color); 
     margin-bottom: 24px;
     overflow: hidden;
 }
@@ -71,7 +71,7 @@
 }
 
 .feed-item-date {
-    color: #666;
+    color: var(--text-color);
     font-size: 0.9em;
     margin: 0;
 }
@@ -117,7 +117,7 @@
 
 .tag-type {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: var(--main-green);
 }
 
 .feed-item-actions {
@@ -139,14 +139,14 @@
 }
 
 .action-button:hover {
-    color: #2196f3;
+    color: var(--primary-color);
 }
 
 /* Styles spécifiques pour le bouton de nouvelle recette */
 .new-recipe-btn { 
     display: block; 
     padding: 12px 32px; 
-    background: #2196f3; 
+    background: var(--primary-color); 
     color: #fff; 
     border: none; 
     border-radius: 8px; 
@@ -157,7 +157,7 @@
 }
 
 .new-recipe-btn:hover { 
-    background: #1976d2; 
+    background: var(--primary-color-dark); 
 }
 
 /* Styles pour mobile */

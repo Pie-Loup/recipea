@@ -1,6 +1,61 @@
 /* Import de la police Fredoka depuis Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&display=swap');
 
+/* Couleurs brutes */
+:root {
+    /* Couleurs principales */
+    --light-red: #cb342a;
+    --dark-red: #a82921;
+    --main-blue: #2196f3;
+    --main-blue-dark: #1976d2;
+    --light-yellow: #f6a800;
+    --dark-yellow: #e19600;
+    --black-text: #1a1a1a;
+    --white-text: #fff6f3;
+    --light-green: #42b883;
+    --dark-green: #2e9e6e;
+    
+    /* Nuances de gris */
+    --gray-100: #f7f7f7;
+    --gray-200: #ddd;
+    --gray-400: #666;
+    --gray-600: #333;
+    
+    /* Couleurs des réseaux sociaux */
+    --google-blue: #4285F4;
+    --facebook-blue: #3b5998;
+    
+    /* Autres couleurs */
+    --pure-white: #fff;
+}
+
+/* Variables sémantiques */
+:root {
+    /* Couleurs de l'interface */
+    --background-color: var(--gray-100);
+    --text-color-dark: var(--black-text);
+    --text-color-light: var(--white-text);
+    --text-muted: var(--gray-400);
+    --primary-color: var(--light-red);
+    --primary-color-dark: var(--dark-red);
+    --white: var(--pure-white);
+    --border-color: var(--gray-200);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    
+    /* Boutons et actions */
+    --record-btn-color: var(--light-yellow);
+    --record-btn-active: var(--dark-yellow);
+    --record-btn-shadow: var(--white-text);
+    --error-color: var(--light-red);
+    --error-color-hover: var(--dark-red);
+    --valid-color: var(--light-green);
+    --valid-color-hover: var(--dark-green);
+    
+    /* Réseaux sociaux */
+    --google-color: var(--google-blue);
+    --facebook-color: var(--facebook-blue);
+}
+
 /* Appliquer Fredoka à tous les éléments */
 * {
     font-family: 'Fredoka', Arial, sans-serif;
@@ -8,7 +63,7 @@
 
 /* Style de base */
 body {
-    background: #f7f7f7;
+    background: var(--background-color);
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -21,9 +76,9 @@ body {
 .container, .profile-container, .feed-container {
     max-width: 700px;
     margin: 20px;
-    background: #fff;
+    background: var(--white);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px var(--shadow-color);
     padding: 32px;
 }
 
@@ -35,15 +90,15 @@ body {
     width: 100%;
     max-width: 400px;
     margin: 20px;
-    background: #fff;
+    background: var(--white);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px var(--shadow-color);
     padding: 32px;
 }
 
 h1, h2 {
     text-align: center;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 32px;
 }
 
@@ -58,8 +113,8 @@ h1, h2 {
 .btn, .blue-btn, .login-btn {
     display: block;
     padding: 12px 32px;
-    background: #2196f3;
-    color: #fff;
+    background: var(--primary-color);
+    color: var(--white);
     border: none;
     border-radius: 8px;
     font-size: 1.1em;
@@ -69,7 +124,7 @@ h1, h2 {
 }
 
 .btn:active, .blue-btn:active {
-    background: #1976d2;
+    background: var(--primary-color-dark);
 }
 
 .login-btn {
@@ -85,7 +140,7 @@ textarea, .search-input {
     width: 100%;
     min-height: 200px;
     padding: 16px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     box-sizing: border-box;
     font-family: inherit;
@@ -105,7 +160,7 @@ textarea, .search-input {
 
 /* Styles spécifiques pour la génération de recettes */
 .upload-area {
-    border: 2px dashed #ccc;
+    border: 2px dashed var(--border-color);
     border-radius: 8px;
     padding: 40px;
     text-align: center;
@@ -115,7 +170,7 @@ textarea, .search-input {
 }
 
 .upload-area:hover {
-    border-color: #2196f3;
+    border-color: var(--primary-color);
 }
 
 .upload-icon {
@@ -137,16 +192,16 @@ textarea, .search-input {
     width: 120px;
     height: 120px;
     border-radius: 60px;
-    background: orange;
-    color: white;
+    background: var(--record-btn-color);
+    color: var(--white);
     font-size: 1.5em;
     border: none;
-    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.2);
+    box-shadow: 0 4px 16px var(--record-btn-shadow);
     transition: background-color 0.2s;
 }
 
 .rec-btn:active {
-    background: #ff8f00;
+    background: var(--record-btn-active);
 }
 
 /* Login et authentification */
@@ -164,13 +219,13 @@ textarea, .search-input {
     padding: 0.75rem;
     text-align: center;
     cursor: pointer;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid var(--border-color);
     font-size: 0.9rem;
 }
 
 .tab.active {
-    border-bottom: 2px solid #2196f3;
-    color: #2196f3;
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
 }
 
 .form-container {
@@ -189,7 +244,7 @@ textarea, .search-input {
     width: 100%;
     padding: 0.75rem;
     margin: 0.5rem 0;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     box-sizing: border-box;
     font-family: 'Fredoka', Arial, sans-serif;
@@ -197,7 +252,7 @@ textarea, .search-input {
 }
 
 .error {
-    color: #e53935;
+    color: var(--error-color);
     margin: 0.5rem 0;
 }
 
@@ -214,21 +269,21 @@ textarea, .search-input {
     height: 1px;
     width: 45%;
     top: 50%;
-    background: #ddd;
+    background: var(--border-color);
 }
 
 .divider:before { left: 0; }
 .divider:after { right: 0; }
 
 .divider span {
-    background: #fff;
+    background: var(--white);
     padding: 0 10px;
-    color: #666;
+    color: var(--text-muted);
 }
 
 /* Boutons de réseaux sociaux */
-.google { background: #4285F4; }
-.facebook { background: #3b5998; }
+.google { background: var(--google-color); }
+.facebook { background: var(--facebook-color); }
 
 /* Messages de succès */
 .success-message {
@@ -242,7 +297,7 @@ textarea, .search-input {
 
 .success-message p {
     margin: 0.5rem 0;
-    color: #666;
+    color: var(--text-muted);
 }
 
 /* Reset password form */

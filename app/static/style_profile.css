@@ -23,7 +23,7 @@
 .btn { 
     display: block; 
     padding: 12px 32px; 
-    background: #2196f3; 
+    background: var(--primary-color); 
     color: #fff; 
     border: none; 
     border-radius: 8px; 
@@ -31,7 +31,7 @@
     cursor: pointer; 
 }
 .btn:active { 
-    background: #1976d2; 
+    background: var(--primary-color-dark); 
 }
 .btn.back-btn {
     background: #666;
@@ -70,14 +70,23 @@
 /* Follow button styles */
 .follow-btn {
     padding: 6px 16px;
-    background: #4caf50;
+    background: var(--valid-color);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
 }
+
+.follow-btn:hover {
+    background: var(--valid-color-hover);
+}
+
 .unfollow-btn {
     background: #f44336;
+}
+
+.unfollow-btn:hover {
+    background: #d32f2f;
 }
 
 /* Following and followers lists */

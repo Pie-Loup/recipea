@@ -38,7 +38,7 @@ h1 {
 
 .option-card h2 {
     margin: 0 0 12px 0;
-    color: #2196f3;
+    color: var(--primary-color);
 }
 
 .option-card p {
