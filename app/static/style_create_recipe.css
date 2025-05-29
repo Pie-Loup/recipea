@@ -1,0 +1,53 @@
+/* Import base styles */
+@import url('style.css');
+
+/* Container styles */
+.container { 
+    max-width: 600px; 
+    margin: 40px auto; 
+    background: #fff; 
+    border-radius: 12px; 
+    box-shadow: 0 2px 12px #0001; 
+    padding: 32px; 
+}
+
+/* Heading styles */
+h1 { 
+    text-align: center; 
+    color: #333; 
+}
+
+/* Option card styles */
+.option-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.option-card h2 {
+    margin: 0 0 12px 0;
+    color: #2196f3;
+}
+
+.option-card p {
+    margin: 0;
+    color: #666;
+}
+
+/* Icon styles */
+.icon {
+    font-size: 2em;
+    margin-bottom: 12px;
+}

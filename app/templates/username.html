@@ -5,29 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup Username - Sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_username.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .username-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        .input-group { margin: 1rem 0; }
-        .input-group label { display: block; margin-bottom: 0.5rem; }
-        .input-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
-        .input-group input:focus { outline: none; border-color: #4285F4; }
-        .submit-btn { width: 100%; margin: 1rem 0; padding: 0.75rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; background: #4285F4; color: #fff; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .error { color: #e53935; font-size: 0.9rem; margin-top: 0.5rem; }
-        .valid { color: #4caf50; font-size: 0.9rem; margin-top: 0.5rem; }
-    </style>
 </head>
 <body>
-    <div class="username-container">
-        <h2>Choose your username</h2>
+    <div class="page-container">
+        <div class="username-container">
+            <h2>Quel est votre nom de chef?</h2>
         <div class="input-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" autocomplete="username" placeholder="Enter username">
+            <input type="text" id="username" autocomplete="username" placeholder="Entrez votre nom de chef" maxlength="30" required>
             <div id="username-status"></div>
         </div>
-        <button id="submit-btn" class="submit-btn" disabled>Save Username</button>
+            <button id="submit-btn" class="submit-btn" disabled>Enregistrer</button>
+        </div>
     </div>
 
     <script>
@@ -82,11 +72,11 @@
 
             if (error && error.code === 'PGRST116') {
                 // No match found - username is available
-                usernameStatus.innerHTML = '<span class="valid">Username is available!</span>';
+                usernameStatus.innerHTML = '<span class="valid">Nom de chef disponible!</span>';
                 submitBtn.disabled = false;
                 usernameValid = true;
             } else {
-                usernameStatus.innerHTML = '<span class="error">Username is already taken.</span>';
+                usernameStatus.innerHTML = '<span class="error">Ce nom de chef existe déjà</span>';
                 submitBtn.disabled = true;
                 usernameValid = false;
             }

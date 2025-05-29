@@ -1,0 +1,69 @@
+/* Import base recipe generator styles */
+@import url('style_recipe_generator.css');
+
+/* Voice recording specific styles */
+.rec-btn {
+    display: block;
+    margin: 32px auto 16px auto;
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    background: orange;
+    color: white;
+    font-size: 1.5em;
+    border: none;
+    box-shadow: 0 4px 16px #ff980033;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    outline: none;
+    position: relative;
+}
+
+.rec-btn.recording {
+    background: #ff5722;
+    box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033; }
+    50% { box-shadow: 0 0 0 24px #ff980033, 0 4px 16px #ff980033; }
+    100% { box-shadow: 0 0 0 8px #ff980033, 0 4px 16px #ff980033; }
+}
+
+/* Audio player styles */
+#audioPlayback {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+/* Recipe button modifications */
+#recipeBtn {
+    margin-top: 16px;
+}
+
+#recipeBtn.ready {
+    background: #4caf50;
+}
+
+#recipeBtn.ready:active {
+    background: #388e3c;
+}
+
+/* Transcript styles */
+#transcript {
+    background: #f1f8ff;
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 40px;
+    font-size: 1.1em;
+    color: #222;
+    margin-top: 12px;
+    white-space: pre-wrap;
+}
+
+/* Recipe content styles */
+#recipe {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}

@@ -74,6 +74,7 @@ recordBtn.addEventListener('click', async () => {
         });
         audioList.innerHTML = list;
         recipeBtn.disabled = false;
+        recipeBtn.classList.add('ready');
       };
       
       mediaRecorder.start();
@@ -89,6 +90,7 @@ async function generateRecipe() {
   if (!audioBlobs.length) return;
   
   recipeBtn.disabled = true;
+  recipeBtn.classList.remove('ready');
   recipeDiv.innerHTML = "<p>Génération de la recette en cours...</p>";
   recipeDiv.classList.add('visible');
   

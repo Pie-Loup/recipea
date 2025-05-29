@@ -5,73 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - Sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
-        .profile-container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
-        h1, h2 { text-align: center; }
-        .nav-container { display: flex; justify-content: center; margin-bottom: 20px; gap: 10px; }
-        .btn { display: block; padding: 12px 32px; background: #2196f3; color: #fff; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; }
-        .btn:active { background: #1976d2; }
-
-        /* Search and follow styles */
-        .search-container { margin: 20px 0; }
-        .search-input { 
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            margin-bottom: 8px;
-        }
-        .search-results {
-            border: 1px solid #eee;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-        }
-        .search-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .search-item:last-child { border-bottom: none; }
-        .follow-btn {
-            padding: 6px 16px;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .unfollow-btn {
-            background: #f44336;
-        }
-        .following-list {
-            margin-top: 32px;
-        }
-        .following-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        /* Add styles for followers section */
-        .followers-list {
-            margin-top: 32px;
-            padding-top: 32px;
-            border-top: 1px solid #eee;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_profile.css') }}">
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <div class="profile-container">
         <div class="nav-container">
-            <button class="btn" onclick="window.location.href='/feed'" style="background:#666">Retour</button>
+            <button class="btn back-btn" onclick="window.location.href='/feed'">Retour</button>
             <button class="btn" onclick="window.location.href='/recipe_generator'">Créer une recette</button>
         </div>
         
@@ -320,7 +260,7 @@
 
             const displayName = profiles?.username || currentUser.email;
             document.getElementById('userInfo').innerHTML = `
-                <p style="text-align:center;color:#666">
+                <p class="user-info">
                     Connecté en tant que : ${displayName}
                 </p>
             `;

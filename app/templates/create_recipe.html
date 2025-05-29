@@ -4,39 +4,7 @@
   <meta charset="utf-8">
   <title>Créer une recette</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
-    h1 { text-align: center; color: #333; }
-    .option-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-    .option-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .option-card h2 {
-      margin: 0 0 12px 0;
-      color: #2196f3;
-    }
-    .option-card p {
-      margin: 0;
-      color: #666;
-    }
-    .icon {
-      font-size: 2em;
-      margin-bottom: 12px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_create_recipe.css') }}">
 </head>
 <body>
   <div class="container">

@@ -2,110 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Créer une recette depuis une photo</title>
-  <link re    <div id="update-input" style="display: none; margin-top: 20px;">
-      <textarea id="update-prompt" placeholder="Que voulez-vous modifier sur cette recette? Par exemple, je n'ai pas de concombre, ou je n'aime pas le fromage, je veux plus de sauce etc..."></textarea>
-      <div class="button-group">
-        <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
-        <button id="saveBtn" class="blue-btn" style="display: none;">Poster ma sauce</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
-    h1 { text-align: center; color: #333; }
-    .upload-area {
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      padding: 40px;
-      text-align: center;
-      margin: 20px 0;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-    .upload-area:hover {
-      border-color: #2196f3;
-    }
-    .upload-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    #preview {
-      max-width: 100%;
-      margin: 20px 0;
-      border-radius: 8px;
-      display: none;
-    }
-    .blue-btn {
-      display: block;
-      margin: 0 auto 24px auto;
-      padding: 16px 32px;
-      background: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .blue-btn:active { background: #1976d2; }
-    .blue-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    .recipe-container {
-      margin-top: 24px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      display: none;
-    }
-    .recipe-container.visible {
-      display: block;
-    }
-    textarea {
-      width: 100%;
-      min-height: 200px;
-      padding: 16px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 1.1em;
-      line-height: 1.5;
-      margin: 20px 0;
-      resize: vertical;
-    }
-    .recipe-section {
-      margin-bottom: 20px;
-    }
-    .recipe-section h3 {
-      color: #2196f3;
-      margin-bottom: 10px;
-    }
-    .recipe-list {
-      list-style-type: none;
-      padding-left: 0;
-    }
-    .recipe-list li {
-      padding: 8px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .recipe-list li:last-child {
-      border-bottom: none;
-    }
-    .other-elements-list {
-      list-style-type: disc;
-      padding-left: 20px;
-      color: #666;
-    }
-    .button-group {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-  </style>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_recipe_generator.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="container">
@@ -124,9 +25,12 @@
 
     <div id="recipe" class="recipe-container"></div>
 
-    <div id="update-input" style="display: none; margin-top: 20px;">
+    <div id="update-input" class="hidden update-section">
       <textarea id="update-prompt" placeholder="Que voulez-vous modifier sur cette recette? Par exemple dites, je n'ai pas de concombre, ou je n'aime pas le fromage, je veux plus de sauce etc..."></textarea>
-      <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
+      <div class="button-group">
+        <button id="updateBtn" class="blue-btn" disabled>Modifier la recette</button>
+        <button id="saveBtn" class="blue-btn hidden">Poster ma sauce</button>
+      </div>
     </div>
   </div>
 
@@ -153,7 +57,7 @@
 
     // Function to enable save button
     function showSaveButton() {
-      saveBtn.style.display = 'block';
+      saveBtn.classList.remove('hidden');
     }
 
     uploadArea.addEventListener('click', () => fileInput.click());
@@ -205,18 +109,18 @@
         
         // Reset the photo input
         document.getElementById('preview').src = '';
-        document.getElementById('preview').style.display = 'none';
+        document.getElementById('preview').classList.add('hidden');
         document.getElementById('fileInput').value = '';
-        document.getElementById('initial-input').style.display = 'block';
-        document.getElementById('update-input').style.display = 'none';
+        document.getElementById('initial-input').classList.remove('hidden');
+        document.getElementById('update-input').classList.add('hidden');
         generateBtn.disabled = false;
         generateBtn.textContent = 'Générer la recette';
         return;
       }
 
       // Only continue with recipe display and update form if it's a valid recipe
-      document.getElementById('initial-input').style.display = 'none';
-      document.getElementById('update-input').style.display = 'block';
+      document.getElementById('initial-input').classList.add('hidden');
+      document.getElementById('update-input').classList.remove('hidden');
 
       recipeDiv.innerHTML = `
         <div class="recipe-section">

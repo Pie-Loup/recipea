@@ -5,11 +5,11 @@ import tempfile
 from google import genai
 import json
 from pydub import AudioSegment
-from functools import wraps
+import io
 import jwt
 import httpx
 from prompts import prompt_voice, prompt_text, prompt_photo, prompt_update
-from supabase import create_client, Client as SupabaseClient
+from supabase import create_client
 
 load_dotenv()
 

@@ -5,36 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        .login-btn { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-        .google { background: #4285F4; color: #fff; }
-        .facebook { background: #3b5998; color: #fff; }
-        .email-form { margin: 1rem 0; }
-        .email-form input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        .submit-btn { background: #2196f3; color: #fff; }
-        .error { color: #e53935; margin: 0.5rem 0; }
-        .tabs { display: flex; margin-bottom: 1rem; }
-        .tab { flex: 1; padding: 0.75rem; text-align: center; cursor: pointer; border-bottom: 2px solid #ddd; font-size: 0.9rem; }
-        .tab.active { border-bottom: 2px solid #2196f3; color: #2196f3; }
-        .form-container { display: none; }
-        .form-container.active { display: block; }
-        .divider { margin: 1rem 0; text-align: center; position: relative; }
-        .divider:before, .divider:after { content: ""; position: absolute; height: 1px; width: 45%; top: 50%; background: #ddd; }
-        .divider:before { left: 0; }
-        .divider:after { right: 0; }
-        .divider span { background: #fff; padding: 0 10px; color: #666; }
-    </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Bienvenue sur Sauce</h2>
+        <h2>sauce</h2>
         <div class="tabs">
             <div class="tab active" onclick="switchTab('login')">Se connecter</div>
             <div class="tab" onclick="switchTab('signup')">S'inscrire</div>
             <div class="tab" onclick="switchTab('reset')">Mot de passe oublié</div>
+        </div>
+
+        <button class="login-btn google" onclick="loginWithProvider('google')">Continuer avec Google</button>
+        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Continuer avec Facebook</button>
+
+        <div class="divider">
+            <span>ou</span>
         </div>
         
         <!-- Login Form -->
@@ -67,12 +54,6 @@
             </div>
         </div>
 
-        <div class="divider">
-            <span>ou</span>
-        </div>
-
-        <button class="login-btn google" onclick="loginWithProvider('google')">Continuer avec Google</button>
-        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Continuer avec Facebook</button>
     </div>
     <script>
         // Supabase project URL and anon key
@@ -167,7 +148,7 @@
 
                 // Show success message with email verification notice
                 document.getElementById('signupForm').innerHTML = `
-                    <div style="text-align: center; padding: 1rem;">
+                    <div class="success-message">
                         <h3>Inscription réussie !</h3>
                         <p>Un email de confirmation vous a été envoyé.</p>
                         <p>Veuillez cliquer sur le lien dans l'email pour activer votre compte.</p>
@@ -197,7 +178,7 @@
 
                 // Show success message
                 document.getElementById('resetForm').innerHTML = `
-                    <div style="text-align: center; padding: 1rem;">
+                    <div class="success-message">
                         <h3>Email envoyé !</h3>
                         <p>Consultez votre boîte mail pour réinitialiser votre mot de passe.</p>
                         <p>Pensez à vérifier vos spams.</p>
@@ -243,7 +224,7 @@
             // Show password reset form
             document.querySelector('.login-container').innerHTML = `
                 <h2>Nouveau mot de passe</h2>
-                <div class="email-form">
+                <div class="email-form password-reset-form">
                     <input type="password" id="newPassword" placeholder="Nouveau mot de passe" required>
                     <input type="password" id="confirmNewPassword" placeholder="Confirmer le mot de passe" required>
                     <button class="login-btn submit-btn" onclick="handlePasswordUpdate()">Mettre à jour</button>
@@ -280,7 +261,7 @@
 
                 // Show success message and redirect
                 document.querySelector('.login-container').innerHTML = `
-                    <div style="text-align: center; padding: 1rem;">
+                    <div class="success-message">
                         <h3>Mot de passe mis à jour !</h3>
                         <p>Vous allez être redirigé vers la page de connexion...</p>
                     </div>`;

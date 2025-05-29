@@ -1,0 +1,141 @@
+/* Import base styles */
+@import url('style.css');
+
+/* Container styles */
+.container { 
+    max-width: 600px; 
+    margin: 40px auto; 
+    background: #fff; 
+    border-radius: 12px; 
+    box-shadow: 0 2px 12px #0001; 
+    padding: 32px; 
+}
+
+/* Heading styles */
+h1 { 
+    text-align: center; 
+    color: #333; 
+}
+
+/* Upload area styles */
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    margin: 20px 0;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.upload-area:hover {
+    border-color: #2196f3;
+}
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+#preview {
+    max-width: 100%;
+    margin: 20px 0;
+    border-radius: 8px;
+    display: none;
+}
+
+/* Button styles */
+.blue-btn {
+    display: block;
+    margin: 0 auto 24px auto;
+    padding: 16px 32px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.blue-btn:active { 
+    background: #1976d2; 
+}
+.blue-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Recipe container styles */
+.recipe-container {
+    margin-top: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: none;
+}
+.recipe-container.visible {
+    display: block;
+}
+
+/* Input styles */
+textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1.1em;
+    line-height: 1.5;
+    margin: 20px 0;
+    resize: vertical;
+}
+
+/* Recipe content styles */
+.recipe-section {
+    margin-bottom: 20px;
+}
+.recipe-section h2 {
+    color: #1976d2; 
+    margin-bottom: 24px; 
+    text-align: center;
+}
+.recipe-section h3 {
+    color: #2196f3;
+    margin-bottom: 10px;
+}
+.recipe-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+.recipe-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+.recipe-list li:last-child {
+    border-bottom: none;
+}
+.other-elements-list {
+    list-style-type: disc;
+    padding-left: 20px;
+    color: #666;
+}
+
+/* Button group styles */
+.button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Error message styles */
+.error-message {
+    text-align: center;
+    color: #666;
+}
+
+/* Update section styles */
+.update-section {
+    margin-top: 20px;
+}
+
+/* Hidden elements */
+.hidden {
+    display: none !important;
+}
