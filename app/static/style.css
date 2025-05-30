@@ -10,8 +10,8 @@
     --main-blue-dark: #1976d2;
     --light-yellow: #f6a800;
     --dark-yellow: #e19600;
-    --black-text: #1a1a1a;
-    --white-text: #fff6f3;
+    --dark-color: #1a1a1a;
+    --light-color: #fff6f3;
     --light-green: #42b883;
     --dark-green: #2e9e6e;
     
@@ -33,19 +33,20 @@
 :root {
     /* Couleurs de l'interface */
     --background-color: var(--gray-100);
-    --text-color-dark: var(--black-text);
-    --text-color-light: var(--white-text);
+    --text-color-dark: var(--dark-color);
+    --text-color-light: var(--light-color);
     --text-muted: var(--gray-400);
     --primary-color: var(--light-red);
     --primary-color-dark: var(--dark-red);
     --white: var(--pure-white);
     --border-color: var(--gray-200);
     --shadow-color: rgba(0, 0, 0, 0.1);
-    
+
+    --light-color-background: var(--light-color);
     /* Boutons et actions */
     --record-btn-color: var(--light-yellow);
     --record-btn-active: var(--dark-yellow);
-    --record-btn-shadow: var(--white-text);
+    --record-btn-shadow: var(--light-color);
     --error-color: var(--light-red);
     --error-color-hover: var(--dark-red);
     --valid-color: var(--light-green);
@@ -114,7 +115,7 @@ h1, h2 {
     display: block;
     padding: 12px 32px;
     background: var(--primary-color);
-    color: var(--white);
+    color: var(--text-color-light);
     border: none;
     border-radius: 8px;
     font-size: 1.1em;
@@ -303,6 +304,101 @@ textarea, .search-input {
 /* Reset password form */
 .password-reset-form {
     margin-top: 1rem;
+}
+
+/* Style du bandeau PWA */
+.pwa-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--main-blue);
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pwa-prompt button {
+    background-color: white;
+    color: var(--main-blue);
+    border: none;
+    padding: 6px 12px;
+    margin: 0 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.pwa-prompt button:hover {
+    background-color: var(--gray-100);
+}
+
+/* Ajuster le margin-top du conteneur principal quand le bandeau est visible */
+.pwa-prompt:not([style*="display: none"]) + .login-container,
+.pwa-prompt:not([style*="display: none"]) + .feed-container {
+    margin-top: 60px;
+}
+
+/* Modal d'installation iOS */
+.ios-install-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.ios-install-content {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 90%;
+    width: 320px;
+}
+
+.ios-install-content h3 {
+    margin-top: 0;
+    color: var(--main-blue);
+}
+
+.ios-install-content ol {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.ios-install-content li {
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.ios-install-content button {
+    background: var(--main-blue);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    width: 100%;
+    margin-top: 16px;
+    cursor: pointer;
+}
+
+.ios-install-content button:hover {
+    background: var(--main-blue-dark);
+}
+
+.ios-icon {
+    font-size: 20px;
+    vertical-align: middle;
 }
 
 /* Styles pour mobile */

@@ -5,37 +5,10 @@
 .feed-container { 
     max-width: 700px; 
     margin: 40px auto;
+    padding: 0 20px;
 }
 
-/* PWA prompt styles */
-.pwa-prompt {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--background-color);
-    color: var(--white);
-    padding: 16px 24px;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px var(--shadow-color);
-    z-index: 1000;
-    text-align: center;
-}
-
-.pwa-prompt button {
-    background: white;
-    color: var(--primary-color);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    margin-left: 12px;
-    cursor: pointer;
-}
-
-.pwa-prompt button:hover {
-    background: var(--primary-color-dark);
-}
+/* PWA prompt styles - hérités de style.css */
 
 /* Feed styles */
 .feed-list { 
@@ -44,7 +17,7 @@
 }
 
 .feed-item { 
-    background: #fff; 
+    background: var(--pure-white); 
     border-radius: 12px; 
     box-shadow: 0 2px 12px var(--shadow-color); 
     margin-bottom: 24px;
@@ -71,7 +44,7 @@
 }
 
 .feed-item-date {
-    color: var(--text-color);
+    color: var(--text-color-dark);
     font-size: 0.9em;
     margin: 0;
 }
@@ -134,7 +107,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #666;
+    color: var(--text-color-dark);
     font-size: 0.9em;
 }
 
@@ -147,7 +120,7 @@
     display: block; 
     padding: 12px 32px; 
     background: var(--primary-color); 
-    color: #fff; 
+    color: var(--text-color-light); 
     border: none; 
     border-radius: 8px; 
     font-size: 1.1em; 

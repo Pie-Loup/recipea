@@ -5,7 +5,7 @@
 .container { 
     max-width: 600px; 
     margin: 40px auto; 
-    background: #fff; 
+    background: var(--pure-white); 
     border-radius: 12px; 
     box-shadow: 0 2px 12px #0001; 
     padding: 32px; 
@@ -14,12 +14,12 @@
 /* Heading styles */
 h1 { 
     text-align: center; 
-    color: #333; 
+    color: var(--text-color-dark); 
 }
 
 /* Option card styles */
 .option-card {
-    background: #fff;
+    background: var(--pure-white);
     border-radius: 12px;
     padding: 24px;
     margin-bottom: 20px;
@@ -43,7 +43,7 @@ h1 {
 
 .option-card p {
     margin: 0;
-    color: #666;
+    color: var(--text-color-dark);
 }
 
 /* Icon styles */

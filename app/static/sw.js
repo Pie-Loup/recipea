@@ -67,3 +67,30 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Push event
+self.addEventListener('push', event => {
+  const data = event.data.json();
+  const options = {
+    body: data.message,
+    icon: '/static/favicon.png',
+    badge: '/static/favicon.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/feed'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification('Sauce', options)
+  );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});

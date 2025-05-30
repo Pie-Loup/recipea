@@ -149,11 +149,9 @@
                     .from('follows')
                     .select(`
                         following_id,
-                        following:user_profiles!follows_following_id_fkey (
+                        following:profiles!follows_v2_following_id_fkey (
                             id,
-                            email,
-                            username,
-                            full_name
+                            username
                         )
                     `)
                     .eq('follower_id', currentUser.id);
@@ -205,11 +203,9 @@
                     .from('follows')
                     .select(`
                         follower_id,
-                        follower:user_profiles!follows_follower_id_fkey (
+                        follower:profiles!follows_v2_follower_id_fkey (
                             id,
-                            email,
-                            username,
-                            full_name
+                            username
                         )
                     `)
                     .eq('following_id', currentUser.id);

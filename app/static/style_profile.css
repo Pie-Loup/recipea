@@ -82,11 +82,11 @@
 }
 
 .unfollow-btn {
-    background: #f44336;
+    background: var(--error-color);
 }
 
 .unfollow-btn:hover {
-    background: #d32f2f;
+    background: var(--error-color-hover);
 }
 
 /* Following and followers lists */
@@ -114,11 +114,11 @@ h1, h2 {
 /* User info */
 .user-info {
     text-align: center;
-    color: #666;
+    color: var(--text-color-dark);
     margin: 20px 0;
 }
 
 /* Error messages */
 .error-message {
-    color: #f44336;
+    color: var(--error-color-dark);
 }

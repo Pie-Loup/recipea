@@ -8,6 +8,7 @@ from pydub import AudioSegment
 import io
 import jwt
 import httpx
+from pywebpush import webpush, WebPushException
 from prompts import prompt_voice, prompt_text, prompt_photo, prompt_update
 from supabase import create_client
 
@@ -32,6 +33,12 @@ if not supabase_anon_key:
 supabase_url = os.environ.get('SUPABASE_URL')
 if not supabase_url:
     raise RuntimeError("SUPABASE_URL is not set in environment variables.")
+
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_CLAIMS = {
+    "sub": "mailto:your@email.com"  # Change this to your email
+}
 
 def verify_supabase_jwt(token):
     print("Verifying token:", token[:20] + "..." if token else None)  # Debug log
@@ -91,7 +98,8 @@ def index():
     return render_template('index.html', 
                          supabase_anon_key=supabase_anon_key, 
                          supabase_url=supabase_url,
-                         site_url=site_url)
+                         site_url=site_url,
+                         vapid_public_key=VAPID_PUBLIC_KEY)
 
 @app.route('/username-setup')
 @login_required
@@ -104,7 +112,10 @@ def feed():
     token = request.cookies.get("sb-access-token")
     if not check_user_has_username(token):
         return redirect(url_for('username_setup'))
-    return render_template('feed.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+    return render_template('feed.html', 
+                         supabase_anon_key=supabase_anon_key, 
+                         supabase_url=supabase_url,
+                         vapid_public_key=VAPID_PUBLIC_KEY)
 
 @app.route('/recipe_generator')
 @login_required
@@ -432,6 +443,137 @@ def get_feed_recipes():
 
     except Exception as e:
         return jsonify({'error': f'Error fetching recipes: {str(e)}'}), 500
+
+@app.route('/push/vapid-public-key')
+def get_vapid_public_key():
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+@app.route('/push/register', methods=['POST'])
+@login_required
+def register_push():
+    try:
+        subscription = request.json.get('subscription')
+        if not subscription:
+            return jsonify({'error': 'No subscription data'}), 400
+
+        token = request.cookies.get("sb-access-token")
+        if not token:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        decoded = verify_supabase_jwt(token)
+        if not decoded:
+            return jsonify({'error': 'Invalid authentication token'}), 401
+            
+        user_id = decoded.get('sub')
+        if not user_id:
+            return jsonify({'error': 'User ID not found in token'}), 401
+
+        # Setup Supabase client with auth headers
+        supabase_client = create_client(supabase_url, supabase_anon_key)
+        supabase_client.postgrest.auth(token)
+
+        # Save subscription to database
+        subscription_data = {
+            'user_id': user_id,
+            'endpoint': subscription['endpoint'],
+            'p256dh': subscription['keys']['p256dh'],
+            'auth': subscription['keys']['auth']
+        }
+
+        result = supabase_client.table('push_subscriptions').insert(subscription_data).execute()
+        
+        return jsonify({'status': 'success'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/push/send-notification', methods=['POST'])
+def send_notification():
+    try:
+        # This endpoint should be called by Supabase's webhook
+        data = request.json
+        
+        if not data or 'type' not in data or data['type'] != 'new_follow':
+            return jsonify({'error': 'Invalid notification type'}), 400
+
+        follower_id = data['follower_id']
+        followed_id = data['followed_id']
+
+        # Get follower's username
+        headers = {
+            "apikey": supabase_anon_key,
+            "Authorization": f"Bearer {supabase_anon_key}"
+        }
+        
+        response = httpx.get(
+            f"{supabase_url}/rest/v1/profiles",
+            headers=headers,
+            params={
+                "id": f"eq.{follower_id}",
+                "select": "username"
+            }
+        )
+        
+        if response.status_code != 200:
+            return jsonify({'error': 'Could not fetch follower info'}), 500
+            
+        follower_data = response.json()
+        if not follower_data:
+            return jsonify({'error': 'Follower not found'}), 404
+            
+        follower_username = follower_data[0]['username']
+
+        # Get followed user's push subscriptions
+        response = httpx.get(
+            f"{supabase_url}/rest/v1/push_subscriptions",
+            headers=headers,
+            params={
+                "user_id": f"eq.{followed_id}",
+                "select": "*"
+            }
+        )
+        
+        if response.status_code != 200:
+            return jsonify({'error': 'Could not fetch push subscriptions'}), 500
+            
+        subscriptions = response.json()
+        
+        # Send notification to all subscriptions
+        for sub in subscriptions:
+            try:
+                subscription_info = {
+                    "endpoint": sub['endpoint'],
+                    "keys": {
+                        "p256dh": sub['p256dh'],
+                        "auth": sub['auth']
+                    }
+                }
+                
+                message = {
+                    'message': f'{follower_username} a commencé à vous suivre !',
+                    'url': f'/profile/{follower_username}'
+                }
+                
+                webpush(
+                    subscription_info=subscription_info,
+                    data=json.dumps(message),
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims=VAPID_CLAIMS
+                )
+            except WebPushException as e:
+                print(f"Subscription {sub['id']} failed:", str(e))
+                if "push subscription has unsubscribed or expired" in str(e):
+                    # Delete invalid subscription
+                    httpx.delete(
+                        f"{supabase_url}/rest/v1/push_subscriptions",
+                        headers=headers,
+                        params={"id": f"eq.{sub['id']}"}
+                    )
+        
+        return jsonify({'status': 'success'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

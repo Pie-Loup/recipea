@@ -9,7 +9,7 @@
     height: 120px;
     border-radius: 60px;
     background: var(--record-btn-color);
-    color: white;
+    color: var(--pure-white);
     font-size: 1.5em;
     border: none;
     box-shadow: 0 4px 16px var(--recode-btn-shadow);
@@ -43,23 +43,11 @@
 }
 
 #recipeBtn.ready {
-    background: #4caf50;
+    background: var(--primary-color);
 }
 
 #recipeBtn.ready:active {
-    background: #388e3c;
-}
-
-/* Transcript styles */
-#transcript {
-    background: #f1f8ff;
-    border-radius: 8px;
-    padding: 16px;
-    min-height: 40px;
-    font-size: 1.1em;
-    color: #222;
-    margin-top: 12px;
-    white-space: pre-wrap;
+    background: var(--primary-color-dark);
 }
 
 /* Recipe content styles */

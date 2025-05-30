@@ -5,10 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#2196f3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="sauce">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 </head>
 <body>
+    <div class="pwa-prompt" id="pwaPrompt">
+        📱 Installez sauce sur votre téléphone !
+        <button onclick="installPWA()">Installer</button>
+        <button onclick="document.getElementById('pwaPrompt').style.display = 'none'">Plus tard</button>
+    </div>
+
     <div class="login-container">
         <h2>sauce</h2>
         <div class="tabs">
@@ -56,10 +70,24 @@
 
     </div>
     <script>
+        // Check notification support on page load
+        window.addEventListener('load', async () => {
+            try {
+                await checkPushNotificationSupport();
+                if (Notification.permission === 'default') {
+                    // Demander la permission dès que possible
+                    await Notification.requestPermission();
+                }
+            } catch (error) {
+                console.log('Les notifications ne sont pas supportées:', error);
+            }
+        });
+
         // Supabase project URL and anon key
         const SUPABASE_URL = "{{ supabase_url }}";
         const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
         const SITE_URL = "{{ site_url }}";
+        const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function switchTab(tabName) {
@@ -211,6 +239,8 @@
             if (session) {
                 // Set cookie for backend (expires in 7 days, path=/)
                 document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax`;
+                // Initialize push notifications after successful login
+                initializePushNotifications().catch(console.error);
                 window.location.href = '/feed';
             }
         });
@@ -275,5 +305,6 @@
             }
         }
     </script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>
 </html>

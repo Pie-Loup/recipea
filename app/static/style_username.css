@@ -11,7 +11,7 @@
 }
 
 .username-container h2 {
-    color: #2c3e50;
+    color: var(--text-color-dark);
     margin-bottom: 1.5rem;
     text-align: center;
     font-size: 1.8rem;
@@ -24,7 +24,7 @@
 .input-group label {
     display: block;
     margin-bottom: 0.75rem;
-    color: #546e7a;
+    color: var(--text-color-dark); 
     font-size: 1.1rem;
 }
 
@@ -54,7 +54,7 @@
     font-weight: 500;
     cursor: pointer;
     background: var(--primary-color);
-    color: #fff;
+    color: var(--pure-white);
     transition: all 0.3s ease;
 }
 
@@ -76,7 +76,7 @@
 }
 
 .error {
-    color: #f44336;
+    color: var(--error-color);
     font-size: 0.9rem;
     margin-top: 0.5rem;
     display: block;
@@ -86,7 +86,7 @@
 }
 
 .valid {
-    color: #4caf50;
+    color: var(--valid-color);
     font-size: 0.9rem;
     margin-top: 0.5rem;
     display: block;
@@ -102,5 +102,5 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: #f5f7fa;
+    background: var(--light-color-background);
 }

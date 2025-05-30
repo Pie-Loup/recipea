@@ -1,10 +1,10 @@
 flask
 python-dotenv
 torch
-openai-whisper
 requests
 google-genai
 pydub
 PyJWT
 httpx
 supabase
+pywebpush
