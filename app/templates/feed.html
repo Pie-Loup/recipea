@@ -183,11 +183,9 @@
                 
                 // Specific handling for iOS PWA
                 const isIOSPWA = window.navigator.standalone === true;
-                const isBrave = navigator.brave && await navigator.brave.isBrave();
                 
                 console.log('Browser detection:', {
                     isIOSPWA,
-                    isBrave,
                     userAgent: navigator.userAgent,
                     standalone: window.navigator.standalone
                 });
@@ -213,12 +211,9 @@
                 console.error('Error enabling notifications:', error);
                 const enableBtn = document.getElementById('enableNotificationsBtn');
                 enableBtn.textContent = '❌';
+                enableBtn.title = error.message || 'Failed to enable notifications';
                 enableBtn.disabled = false;
-                
-                // Show more specific error for debugging
-                if (error.message.includes('AbortError')) {
-                    console.log('AbortError detected - this is common on Brave/iOS');
-                }
+                console.log('Failed to enable notifications:', error.message);
             }
         }
 

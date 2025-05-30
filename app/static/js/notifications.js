@@ -69,8 +69,10 @@ async function initializePushNotifications() {
         
         const result = await subscribeToPushNotifications();
         console.log('Push notifications initialized:', result);
+        return result;
     } catch (error) {
         console.error('Failed to initialize push notifications:', error);
+        throw error;
     }
 }
 
@@ -194,46 +196,11 @@ async function subscribeToPushNotifications() {
             
             // Détection du navigateur pour debug
             const userAgent = navigator.userAgent;
-            console.log('User Agent:', userAgent);
-            
-            // Meilleure détection de Brave (async check)
-            let isBrave = false;
-            try {
-                isBrave = navigator.brave && await navigator.brave.isBrave();
-            } catch (e) {
-                // Fallback detection for Brave
-                isBrave = userAgent.includes('Brave') || (userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('OPR') && navigator.brave);
-            }
-            
-            const isChrome = userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('OPR') && !isBrave;
             const isIOSPWA = window.navigator.standalone === true;
-            const isIOS = /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             
-            console.log('Detected browser - Brave:', isBrave, 'Chrome:', isChrome, 'iOS PWA:', isIOSPWA, 'iOS:', isIOS);
+            console.log('Detected browser - iOS PWA:', isIOSPWA);
             
-            // Pour Brave, vérifier les paramètres spécifiques
-            if (isBrave) {
-                console.log('Brave browser detected - checking additional settings...');
-                
-                // Vérifier si les notifications sont activées dans Brave
-                if (Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
-                    console.log('Brave: All permissions seem correct');
-                } else {
-                    console.warn('Brave: Some permissions may be missing');
-                }
-                
-                // Pour Brave, attendre plus longtemps que le service worker soit complètement prêt
-                console.log('Using extended delay for Brave browser');
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Vérifier à nouveau que le service worker est actif après le délai
-                if (!registration.active) {
-                    console.error('Brave: Service worker still not active after extended delay');
-                    throw new Error('Brave: Service worker not ready after extended wait');
-                }
-                
-                console.log('Brave: Service worker confirmed active, proceeding with subscription');
-            } else if (isIOSPWA) {
+            if (isIOSPWA) {
                 console.log('iOS PWA detected - applying special handling...');
                 
                 // Pour iOS PWA, vérifier les permissions différemment
@@ -264,21 +231,7 @@ async function subscribeToPushNotifications() {
             subscription = await registration.pushManager.subscribe(subscribeOptions);
             console.log('Subscription successful!');
         } catch (subscribeError) {
-            console.error('Detailed subscription error:', subscribeError);
-            console.error('Error name:', subscribeError.name);
-            console.error('Error message:', subscribeError.message);
-            console.error('Error stack:', subscribeError.stack);
-            
-            // Essayer de donner plus d'informations sur l'erreur
-            if (subscribeError.name === 'AbortError') {
-                console.error('AbortError suggests the push service rejected the request');
-                console.error('This could be due to:');
-                console.error('1. Invalid VAPID key format');
-                console.error('2. VAPID key not matching the origin');
-                console.error('3. Push service temporarily unavailable');
-                console.error('4. Browser-specific push service issues');
-            }
-            
+            console.error('Subscription error:', subscribeError);
             throw subscribeError;
         }
         console.log('Push subscription created:', subscription);
@@ -327,3 +280,5 @@ async function sendSubscriptionToServer(subscription) {
     
     return true;
 }
+
+
