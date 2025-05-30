@@ -3,12 +3,9 @@
 
 /* Container styles */
 .container { 
-    max-width: 600px; 
+    max-width: 800px; 
     margin: 40px auto; 
-    background: #fff; 
-    border-radius: 12px; 
-    box-shadow: 0 2px 12px #0001; 
-    padding: 32px; 
+    padding: 0 10px;
 }
 
 /* Heading styles */
@@ -66,8 +63,9 @@ h1 {
 .recipe-container {
     margin-top: 24px;
     padding: 20px;
-    background: var(--text-color-light);
+    background: var(--pure-white);
     border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     display: none;
 }
 .recipe-container.visible {

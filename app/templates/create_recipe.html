@@ -2,29 +2,34 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2196f3">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <title>Créer une recette</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style_create_recipe.css') }}">
 </head>
 <body>
+  <a href="/feed" class="back-button">
+    <span>←</span> Retour
+  </a>
   <div class="container">
     <h1>Créer une recette</h1>
     
     <a href="/create-recipe/photo" class="option-card">
       <div class="icon">📷</div>
-      <h2>Photo</h2>
       <p>Créer une recette à partir d'une photo</p>
     </a>
 
     <a href="/create-recipe/text" class="option-card">
       <div class="icon">📝</div>
-      <h2>Texte</h2>
       <p>Créer une recette à partir d'une description textuelle</p>
     </a>
 
     <a href="/voice-recipe" class="option-card">
       <div class="icon">🎤</div>
-      <h2>Voix</h2>
       <p>Créer une recette en utilisant votre voix</p>
     </a>
   </div>

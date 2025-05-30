@@ -3,12 +3,11 @@
 
 /* Container styles */
 .container { 
-    max-width: 600px; 
+    max-width: 800px; 
     margin: 40px auto; 
-    background: var(--pure-white); 
-    border-radius: 12px; 
-    box-shadow: 0 2px 12px #0001; 
-    padding: 32px; 
+    padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Heading styles */
@@ -28,7 +27,10 @@ h1 {
     cursor: pointer;
     text-decoration: none;
     color: inherit;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 16px;
 }
 
 .option-card:hover {
@@ -49,5 +51,79 @@ h1 {
 /* Icon styles */
 .icon {
     font-size: 2em;
-    margin-bottom: 12px;
+    flex-shrink: 0;
+    width: 1.2em;
+    text-align: center;
+}
+
+/* Back button styles */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--pure-white);
+    color: var(--text-color-dark);
+    text-decoration: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.back-button:hover {
+    transform: translateX(-2px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.back-button span {
+    margin-right: 8px;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 480px) {
+    .container {
+        margin: 20px auto;
+        padding: 0 16px;
+    }
+
+    h1 {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+
+    .option-card {
+        padding: 16px;
+        margin-bottom: 16px;
+        gap: 16px;
+    }
+
+    .icon {
+        font-size: 1.6em;
+    }
+
+    .back-button {
+        padding: 8px 12px;
+        font-size: 14px;
+        top: 16px;
+        left: 16px;
+    }
+
+    .option-card p {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+}
+
+/* Fix for devices with notches */
+@supports(padding: max(0px)) {
+    .container {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+    
+    .back-button {
+        left: max(20px, env(safe-area-inset-left));
+    }
 }
