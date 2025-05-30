@@ -1,13 +1,13 @@
-// Register Service Worker
+// PWA Installation and Service Worker Registration
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/static/sw.js')
-            .then(registration => {
-                console.log('ServiceWorker registration successful');
-            })
-            .catch(err => {
-                console.log('ServiceWorker registration failed: ', err);
-            });
+    window.addEventListener('load', async () => {
+        try {
+            // Register service worker only (without push notifications)
+            await registerServiceWorker();
+            console.log('Service Worker initialized');
+        } catch (err) {
+            console.error('Service Worker initialization failed: ', err);
+        }
     });
 }
 

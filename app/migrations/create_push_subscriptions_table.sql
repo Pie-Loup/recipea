@@ -40,7 +40,7 @@ begin
     -- The notification will be sent via your backend webhook
     -- This function just ensures the webhook is called
     perform net.http_post(
-        'https://your-backend-url.com/notify',  -- You'll need to update this URL
+        'https://helping-pumped-gobbler.ngrok-free.app/notify',
         jsonb_build_object(
             'type', 'new_follow',
             'follower_id', auth.uid(),

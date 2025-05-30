@@ -1,8 +1,24 @@
-// Function to urlBase64ToUint8Array
+// Vérifie si le navigateur supporte les notifications push
+async function checkNotificationSupport() {
+    console.log('Checking Service Worker support...', 'serviceWorker' in navigator);
+    if (!('serviceWorker' in navigator)) {
+        throw new Error('Service Workers are not supported');
+    }
+    console.log('Checking PushManager support...', 'PushManager' in window);
+    if (!('PushManager' in window)) {
+        throw new Error('Push notifications are not supported');
+    }
+    console.log('Current notification permission:', Notification.permission);
+    if (Notification.permission === 'denied') {
+        throw new Error('Push notifications are blocked');
+    }
+}
+
+// Convertit une clé VAPID base64url en Uint8Array
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
+        .replace(/-/g, '+')
         .replace(/_/g, '/');
 
     const rawData = window.atob(base64);
@@ -14,121 +30,300 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-// Check if push notifications are supported
-async function checkPushNotificationSupport() {
-    // Détecter iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    
-    if (isIOS) {
-        throw new Error('iOS_DEVICE');
-    }
-    
-    if (!('serviceWorker' in navigator)) {
-        throw new Error('Service Workers are not supported');
-    }
-    
-    if (!('PushManager' in window)) {
-        throw new Error('Push notifications are not supported');
-    }
-    
-    if (!('Notification' in window)) {
-        throw new Error('Notifications are not supported');
-    }
-}
-
-// Request notification permission
-async function requestNotificationPermission() {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-        throw new Error('Notification permission denied');
-    }
-    return permission;
-}
-
-// Subscribe to push notifications
-async function subscribeToPushNotifications() {
+// Enregistre le service worker
+async function registerServiceWorker() {
+    console.log('=== Registering service worker ===');
     try {
-        await checkPushNotificationSupport();
-        await requestNotificationPermission();
-
-        // Get service worker registration
-        const registration = await navigator.serviceWorker.ready;
-
-        // Use VAPID key from the window object (passed from Flask)
-        const publicKey = window.VAPID_PUBLIC_KEY;
-
-        // Convert VAPID key to Uint8Array
-        const convertedVapidKey = urlBase64ToUint8Array(publicKey);
-
-        // Get push subscription
-        let subscription = await registration.pushManager.getSubscription();
-
-        // If no subscription exists, create one
-        if (!subscription) {
-            subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedVapidKey
+        const registration = await navigator.serviceWorker.register('/static/sw.js');
+        console.log('Service Worker registration successful with scope:', registration.scope);
+        
+        // Attendre que le service worker soit activé
+        if (registration.active) {
+            console.log('Service Worker already active');
+        } else {
+            console.log('Waiting for Service Worker to activate...');
+            await new Promise((resolve) => {
+                registration.addEventListener('activate', (event) => {
+                    console.log('Service Worker activated!');
+                    resolve();
+                });
             });
         }
-
-        // Send subscription to server
-        await fetch('/push/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                subscription: subscription
-            })
-        });
-
-        return subscription;
+        
+        return registration;
     } catch (error) {
-        console.error('Error subscribing to push notifications:', error);
+        console.error('Service Worker registration failed:', error);
         throw error;
     }
 }
 
-// Initialize push notifications when user is logged in
+// S'abonne aux notifications push
+// Fonction d'initialisation appelée au chargement de la page
 async function initializePushNotifications() {
+    console.log('=== Initializing push notifications ===');
     try {
-        const subscription = await subscribeToPushNotifications();
-        console.log('Successfully subscribed to push notifications');
+        if (!window.VAPID_PUBLIC_KEY) {
+            throw new Error('VAPID public key not found in window object');
+        }
+        console.log('VAPID key present:', window.VAPID_PUBLIC_KEY);
+        
+        const result = await subscribeToPushNotifications();
+        console.log('Push notifications initialized:', result);
     } catch (error) {
         console.error('Failed to initialize push notifications:', error);
-        
-        // Si c'est un appareil iOS, suggérer l'installation de la PWA
-        if (error.message === 'iOS_DEVICE') {
-            // Vérifier si l'app n'est pas déjà installée
-            if (!window.matchMedia('(display-mode: standalone)').matches) {
-                const pwaPrompt = document.getElementById('pwaPrompt');
-                if (pwaPrompt) {
-                    pwaPrompt.innerHTML = `
-                        📱 Pour une meilleure expérience, installez sauce sur votre iPhone !
-                        <button onclick="showIOSInstallInstructions()">Comment faire ?</button>
-                        <button onclick="document.getElementById('pwaPrompt').style.display = 'none'">Plus tard</button>
-                    `;
-                    pwaPrompt.style.display = 'block';
-                }
-            }
-        }
     }
 }
 
-// Fonction pour montrer les instructions d'installation sur iOS
-function showIOSInstallInstructions() {
-    const modal = document.createElement('div');
-    modal.className = 'ios-install-modal';
-    modal.innerHTML = `
-        <div class="ios-install-content">
-            <h3>Installation sur iPhone/iPad</h3>
-            <ol>
-                <li>Appuyez sur le bouton de partage <span class="ios-icon">⎙</span></li>
-                <li>Faites défiler et appuyez sur "Sur l'écran d'accueil"</li>
-                <li>Appuyez sur "Ajouter"</li>
-            </ol>
-            <button onclick="this.parentElement.parentElement.remove()">Fermer</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
+async function subscribeToPushNotifications() {
+    try {
+        console.log('=== Starting subscription process ===');
+        console.log('Checking notification support...');
+        await checkNotificationSupport();
+        console.log('Notification support OK');
+        
+        // Demander la permission pour les notifications si ce n'est pas déjà fait
+        console.log('Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        console.log('Permission status:', permission);
+        if (permission !== 'granted') {
+            throw new Error('Notification permission not granted');
+        }
+
+        // Enregistrer d'abord le service worker
+        console.log('Registering service worker...');
+        let registration = await registerServiceWorker();
+        
+        // Essayer d'utiliser une registration existante si disponible
+        const existingRegistration = await navigator.serviceWorker.getRegistration('/static/sw.js');
+        if (existingRegistration && existingRegistration.active) {
+            console.log('Using existing service worker registration');
+            registration = existingRegistration;
+        }
+        
+        console.log('Waiting for service worker to be ready...');
+        
+        // S'assurer que le service worker est ready
+        if (!registration.active) {
+            console.log('Service worker not active, waiting...');
+            await new Promise(resolve => {
+                if (registration.installing) {
+                    registration.installing.addEventListener('statechange', function() {
+                        if (this.state === 'activated') {
+                            console.log('Service worker is now activated');
+                            resolve();
+                        }
+                    });
+                } else if (registration.waiting) {
+                    registration.waiting.addEventListener('statechange', function() {
+                        if (this.state === 'activated') {
+                            console.log('Service worker is now activated');
+                            resolve();
+                        }
+                    });
+                } else {
+                    // Fallback si aucun service worker en attente
+                    setTimeout(resolve, 1000);
+                }
+            });
+        }
+        
+        // Attendre encore un peu pour s'assurer que tout est prêt
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Vérifier si une souscription existe déjà
+        console.log('Checking for existing subscription...');
+        const existingSubscription = await registration.pushManager.getSubscription();
+        if (existingSubscription) {
+            console.log('Found existing push subscription, unsubscribing first...');
+            try {
+                await existingSubscription.unsubscribe();
+                console.log('Successfully unsubscribed from existing subscription');
+            } catch (unsubError) {
+                console.warn('Failed to unsubscribe from existing subscription:', unsubError);
+            }
+        } else {
+            console.log('No existing subscription found');
+        }
+
+        // Si pas de souscription existante, en créer une nouvelle
+        console.log('Getting VAPID public key from window...');
+        const publicKey = window.VAPID_PUBLIC_KEY;
+        if (!publicKey) {
+            throw new Error('VAPID public key not found');
+        }
+        console.log('Got VAPID public key:', publicKey);
+        console.log('Service worker registered');
+        
+        // Convertir la clé VAPID en format approprié
+        console.log('Original VAPID key length:', publicKey.length);
+        console.log('Original VAPID key first 20 chars:', publicKey.substring(0, 20));
+        
+        const applicationServerKey = urlBase64ToUint8Array(publicKey);
+        console.log('Converted VAPID key to Uint8Array, length:', applicationServerKey.length);
+        console.log('Expected length should be 65 bytes for P-256 key');
+        console.log('First few bytes:', Array.from(applicationServerKey.slice(0, 10)));
+        console.log('Last few bytes:', Array.from(applicationServerKey.slice(-10)));
+        
+        // Vérifier que la clé a la bonne longueur
+        if (applicationServerKey.length !== 65) {
+            console.error('VAPID key has wrong length:', applicationServerKey.length, 'expected 65');
+            throw new Error(`VAPID key has wrong length: ${applicationServerKey.length}, expected 65`);
+        }
+        
+        // Créer la souscription
+        const subscribeOptions = {
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        };
+        
+        console.log('Subscribing to push notifications with options:', {
+            userVisibleOnly: subscribeOptions.userVisibleOnly,
+            applicationServerKeyLength: subscribeOptions.applicationServerKey.length
+        });
+        console.log('Registration pushManager available:', !!registration.pushManager);
+        
+        let subscription;
+        try {
+            console.log('Calling registration.pushManager.subscribe...');
+            
+            // Vérifier une dernière fois que le service worker est actif
+            if (!registration.active) {
+                console.error('Service worker still not active before subscription');
+                throw new Error('Service worker not ready for push subscription');
+            }
+            
+            // Détection du navigateur pour debug
+            const userAgent = navigator.userAgent;
+            console.log('User Agent:', userAgent);
+            
+            // Meilleure détection de Brave (async check)
+            let isBrave = false;
+            try {
+                isBrave = navigator.brave && await navigator.brave.isBrave();
+            } catch (e) {
+                // Fallback detection for Brave
+                isBrave = userAgent.includes('Brave') || (userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('OPR') && navigator.brave);
+            }
+            
+            const isChrome = userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('OPR') && !isBrave;
+            const isIOSPWA = window.navigator.standalone === true;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
+            console.log('Detected browser - Brave:', isBrave, 'Chrome:', isChrome, 'iOS PWA:', isIOSPWA, 'iOS:', isIOS);
+            
+            // Pour Brave, vérifier les paramètres spécifiques
+            if (isBrave) {
+                console.log('Brave browser detected - checking additional settings...');
+                
+                // Vérifier si les notifications sont activées dans Brave
+                if (Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+                    console.log('Brave: All permissions seem correct');
+                } else {
+                    console.warn('Brave: Some permissions may be missing');
+                }
+                
+                // Pour Brave, attendre plus longtemps que le service worker soit complètement prêt
+                console.log('Using extended delay for Brave browser');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Vérifier à nouveau que le service worker est actif après le délai
+                if (!registration.active) {
+                    console.error('Brave: Service worker still not active after extended delay');
+                    throw new Error('Brave: Service worker not ready after extended wait');
+                }
+                
+                console.log('Brave: Service worker confirmed active, proceeding with subscription');
+            } else if (isIOSPWA) {
+                console.log('iOS PWA detected - applying special handling...');
+                
+                // Pour iOS PWA, vérifier les permissions différemment
+                if (Notification.permission === 'default') {
+                    console.log('iOS PWA: Requesting notification permission...');
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        throw new Error('iOS PWA: Notification permission not granted');
+                    }
+                }
+                
+                // Attendre plus longtemps pour iOS PWA
+                console.log('Using extended delay for iOS PWA');
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Vérifier que le service worker est prêt pour iOS PWA
+                if (!registration.active) {
+                    console.error('iOS PWA: Service worker not active');
+                    throw new Error('iOS PWA: Service worker not ready');
+                }
+                
+                console.log('iOS PWA: Ready for subscription');
+            } else {
+                // Délai standard pour les autres navigateurs
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            subscription = await registration.pushManager.subscribe(subscribeOptions);
+            console.log('Subscription successful!');
+        } catch (subscribeError) {
+            console.error('Detailed subscription error:', subscribeError);
+            console.error('Error name:', subscribeError.name);
+            console.error('Error message:', subscribeError.message);
+            console.error('Error stack:', subscribeError.stack);
+            
+            // Essayer de donner plus d'informations sur l'erreur
+            if (subscribeError.name === 'AbortError') {
+                console.error('AbortError suggests the push service rejected the request');
+                console.error('This could be due to:');
+                console.error('1. Invalid VAPID key format');
+                console.error('2. VAPID key not matching the origin');
+                console.error('3. Push service temporarily unavailable');
+                console.error('4. Browser-specific push service issues');
+            }
+            
+            throw subscribeError;
+        }
+        console.log('Push subscription created:', subscription);
+        
+        // Envoyer la souscription au serveur
+        console.log('Sending subscription to server:', subscription);
+        const subscribeResponse = await fetch('/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',  // Pour envoyer les cookies
+            body: JSON.stringify(subscription)
+        });
+        
+        if (!subscribeResponse.ok) {
+            const errorText = await subscribeResponse.text();
+            console.error('Failed to subscribe:', errorText);
+            throw new Error('Failed to subscribe to push notifications');
+        }
+        
+        console.log('Successfully subscribed to push notifications');
+        return true;
+    } catch (error) {
+        console.error('Error subscribing to push notifications:', error);
+        return false;
+    }
+}
+
+// Envoie la souscription au serveur
+async function sendSubscriptionToServer(subscription) {
+    const response = await fetch('/subscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(subscription)
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to send subscription to server:', errorText);
+        throw new Error('Failed to send subscription to server');
+    }
+    
+    return true;
 }

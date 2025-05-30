@@ -37,13 +37,10 @@ if not supabase_url:
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
 VAPID_CLAIMS = {
-    "sub": "mailto:your@email.com"  # Change this to your email
+    "sub": f"mailto:{os.environ.get('CONTACT_EMAIL', 'push.notifications@sauce.cool')}"
 }
 
 def verify_supabase_jwt(token):
-    print("Verifying token:", token[:20] + "..." if token else None)  # Debug log
-    # You can use PyJWT to verify, or call Supabase's /user endpoint
-    # Here is a simple example using PyJWT:
     try:
         # Note: Supabase JWTs use HS256 algorithm and have specific claims
         payload = jwt.decode(
@@ -53,7 +50,6 @@ def verify_supabase_jwt(token):
             audience=["authenticated"],
             options={"verify_exp": True}
         )
-        print("Token verification success:", payload.get('sub'))  # Debug log
         return payload
     except Exception as e:
         print("Token verification failed:", str(e))  # Debug log
@@ -444,136 +440,247 @@ def get_feed_recipes():
     except Exception as e:
         return jsonify({'error': f'Error fetching recipes: {str(e)}'}), 500
 
-@app.route('/push/vapid-public-key')
+@app.route('/vapid-public-key')
 def get_vapid_public_key():
-    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+    return jsonify({"publicKey": VAPID_PUBLIC_KEY})
 
-@app.route('/push/register', methods=['POST'])
+@app.route('/subscribe', methods=['POST'])
 @login_required
-def register_push():
+def subscribe():
+    print("\n=== New Subscription Request ===")
+    token = request.cookies.get("sb-access-token")
+    print(f"Token present: {'yes' if token else 'no'}")
+    
     try:
-        subscription = request.json.get('subscription')
-        if not subscription:
-            return jsonify({'error': 'No subscription data'}), 400
-
-        token = request.cookies.get("sb-access-token")
-        if not token:
-            return jsonify({'error': 'Not authenticated'}), 401
-
-        decoded = verify_supabase_jwt(token)
-        if not decoded:
-            return jsonify({'error': 'Invalid authentication token'}), 401
-            
-        user_id = decoded.get('sub')
-        if not user_id:
-            return jsonify({'error': 'User ID not found in token'}), 401
-
-        # Setup Supabase client with auth headers
-        supabase_client = create_client(supabase_url, supabase_anon_key)
-        supabase_client.postgrest.auth(token)
-
-        # Save subscription to database
-        subscription_data = {
-            'user_id': user_id,
-            'endpoint': subscription['endpoint'],
-            'p256dh': subscription['keys']['p256dh'],
-            'auth': subscription['keys']['auth']
-        }
-
-        result = supabase_client.table('push_subscriptions').insert(subscription_data).execute()
-        
-        return jsonify({'status': 'success'})
-
+        decoded_token = verify_supabase_jwt(token)
+        user_id = decoded_token['sub']
+        print(f"Successfully decoded token. User ID: {user_id}")
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/push/send-notification', methods=['POST'])
-def send_notification():
+        print(f"Error decoding token: {str(e)}")
+        return jsonify({"error": "Invalid token"}), 401
+    
+    subscription_data = request.get_json()
+    print("\nReceived subscription data:")
+    print(f"- endpoint: {subscription_data.get('endpoint', 'NOT FOUND')[:50]}...")
+    print(f"- keys present: {', '.join(subscription_data.get('keys', {}).keys())}")
+    
+    if not subscription_data or not all(k in subscription_data for k in ('endpoint', 'keys')):
+        print("Error: Missing required subscription data")
+        return jsonify({"error": "Invalid subscription data: missing endpoint or keys"}), 400
+    
+    # Créer le client Supabase avec l'authentification
+    supabase = create_client(supabase_url, supabase_anon_key)
+    supabase.postgrest.auth(token)  # Ajouter le token JWT pour l'authentification
+    
     try:
-        # This endpoint should be called by Supabase's webhook
-        data = request.json
-        
-        if not data or 'type' not in data or data['type'] != 'new_follow':
-            return jsonify({'error': 'Invalid notification type'}), 400
-
-        follower_id = data['follower_id']
-        followed_id = data['followed_id']
-
-        # Get follower's username
-        headers = {
-            "apikey": supabase_anon_key,
-            "Authorization": f"Bearer {supabase_anon_key}"
+        print("Checking if subscription exists")
+        # Vérifier si la souscription existe déjà
+        existing = supabase.table('push_subscriptions')\
+            .select('id')\
+            .eq('user_id', user_id)\
+            .eq('endpoint', subscription_data['endpoint'])\
+            .execute()
+            
+        subscription_data_db = {
+            'user_id': user_id,
+            'endpoint': subscription_data['endpoint'],
+            'p256dh': subscription_data['keys']['p256dh'],
+            'auth': subscription_data['keys']['auth']
         }
         
-        response = httpx.get(
-            f"{supabase_url}/rest/v1/profiles",
-            headers=headers,
-            params={
-                "id": f"eq.{follower_id}",
-                "select": "username"
-            }
-        )
-        
-        if response.status_code != 200:
-            return jsonify({'error': 'Could not fetch follower info'}), 500
-            
-        follower_data = response.json()
-        if not follower_data:
-            return jsonify({'error': 'Follower not found'}), 404
-            
-        follower_username = follower_data[0]['username']
+        if existing.data:
+            print("Updating existing subscription")
+            result = supabase.table('push_subscriptions')\
+                .update(subscription_data_db)\
+                .eq('user_id', user_id)\
+                .eq('endpoint', subscription_data['endpoint'])\
+                .execute()
+        else:
+            print("Inserting new subscription")
+            result = supabase.table('push_subscriptions')\
+                .insert(subscription_data_db)\
+                .execute()
+                
+        print("Database operation result:", result)
+        return jsonify({"message": "Successfully subscribed to push notifications"}), 201
+    except Exception as e:
+        print("Error subscribing to push notifications:")
+        print(str(e))
+        return jsonify({"error": str(e)}), 500
 
-        # Get followed user's push subscriptions
-        response = httpx.get(
-            f"{supabase_url}/rest/v1/push_subscriptions",
-            headers=headers,
-            params={
-                "user_id": f"eq.{followed_id}",
-                "select": "*"
-            }
-        )
-        
-        if response.status_code != 200:
-            return jsonify({'error': 'Could not fetch push subscriptions'}), 500
-            
-        subscriptions = response.json()
-        
-        # Send notification to all subscriptions
-        for sub in subscriptions:
-            try:
-                subscription_info = {
-                    "endpoint": sub['endpoint'],
+@app.route('/notify', methods=['POST'])
+def push_notification():
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    
+    data = request.get_json()
+    
+    if not all(k in data for k in ('type', 'follower_id', 'followed_id')):
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    # Créer une connexion Supabase avec la clé service pour avoir accès à toutes les données
+    supabase = create_client(supabase_url, supabase_anon_key)
+    
+    # Récupérer les souscriptions push de l'utilisateur ciblé
+    subscriptions = supabase.table('push_subscriptions').select('*').eq('user_id', data['followed_id']).execute()
+    
+    if not subscriptions.data:
+        return jsonify({"message": "No push subscriptions found for user"}), 200
+    
+    # Récupérer les informations du follower pour le message
+    follower = supabase.table('profiles').select('username').eq('id', data['follower_id']).single().execute()
+    if not follower.data:
+        return jsonify({"error": "Follower not found"}), 404
+    
+    follower_username = follower.data.get('username', 'Someone')
+    
+    # Préparer le message de notification
+    notification_data = {
+        "title": "New Follower!",
+        "body": f"{follower_username} started following you",
+        "icon": "/static/icon.png",  # Assurez-vous d'avoir une icône
+        "badge": "/static/badge.png",  # Assurez-vous d'avoir un badge
+        "data": {
+            "type": data['type'],
+            "follower_id": data['follower_id'],
+            "followed_id": data['followed_id'],
+            "url": f"/profile/{data['follower_id']}"  # URL à ouvrir quand on clique sur la notification
+        }
+    }
+    
+    # Envoyer la notification à chaque souscription
+    for subscription in subscriptions.data:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": subscription['endpoint'],
                     "keys": {
-                        "p256dh": sub['p256dh'],
-                        "auth": sub['auth']
+                        "p256dh": subscription['p256dh'],
+                        "auth": subscription['auth']
+                    }
+                },
+                data=json.dumps(notification_data),
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS
+            )
+        except WebPushException as e:
+            print(f"WebPush failed for subscription {subscription['id']}: {e}")
+            if e.response and e.response.status_code in [404, 410]:  # Endpoint expiré ou non valide
+                # Supprimer la souscription invalide
+                supabase.table('push_subscriptions').delete().eq('id', subscription['id']).execute()
+    
+    return jsonify({"message": "Notifications sent successfully"}), 200
+
+@app.route('/process-notifications')
+def process_notifications():
+    try:
+        # Créer une connexion Supabase
+        supabase = create_client(supabase_url, supabase_anon_key)
+        
+        # Récupérer les notifications non traitées
+        notifications = supabase.table('notifications_queue')\
+            .select('*')\
+            .is_('processed_at', 'null')\
+            .execute()
+        
+        if not notifications.data:
+            return jsonify({"message": "No notifications to process"}), 200
+            
+        for notification in notifications.data:
+            try:
+                # Récupérer les souscriptions push de l'utilisateur ciblé
+                subscriptions = supabase.table('push_subscriptions')\
+                    .select('*')\
+                    .eq('user_id', notification['followed_id'])\
+                    .execute()
+                
+                if not subscriptions.data:
+                    # Marquer comme traitée même s'il n'y a pas de souscription
+                    supabase.table('notifications_queue')\
+                        .update({'processed_at': 'now()'})\
+                        .eq('id', notification['id'])\
+                        .execute()
+                    continue
+                
+                # Récupérer les informations du follower
+                follower = supabase.table('profiles')\
+                    .select('username')\
+                    .eq('id', notification['follower_id'])\
+                    .single()\
+                    .execute()
+                
+                if not follower.data:
+                    raise Exception(f"Follower not found: {notification['follower_id']}")
+                
+                follower_username = follower.data.get('username', 'Someone')
+                
+                # Préparer la notification
+                notification_data = {
+                    "title": "New Follower!",
+                    "body": f"{follower_username} started following you",
+                    "icon": "/static/icon.png",
+                    "badge": "/static/badge.png",
+                    "data": {
+                        "type": notification['type'],
+                        "follower_id": notification['follower_id'],
+                        "followed_id": notification['followed_id'],
+                        "url": f"/profile/{notification['follower_id']}"
                     }
                 }
                 
-                message = {
-                    'message': f'{follower_username} a commencé à vous suivre !',
-                    'url': f'/profile/{follower_username}'
-                }
+                # Envoyer à toutes les souscriptions
+                for subscription in subscriptions.data:
+                    try:
+                        webpush(
+                            subscription_info={
+                                "endpoint": subscription['endpoint'],
+                                "keys": {
+                                    "p256dh": subscription['p256dh'],
+                                    "auth": subscription['auth']
+                                }
+                            },
+                            data=json.dumps(notification_data),
+                            vapid_private_key=VAPID_PRIVATE_KEY,
+                            vapid_claims=VAPID_CLAIMS
+                        )
+                    except WebPushException as e:
+                        print(f"WebPush failed for subscription {subscription['id']}: {e}")
+                        if e.response and e.response.status_code in [404, 410]:
+                            # Supprimer la souscription invalide
+                            supabase.table('push_subscriptions')\
+                                .delete()\
+                                .eq('id', subscription['id'])\
+                                .execute()
                 
-                webpush(
-                    subscription_info=subscription_info,
-                    data=json.dumps(message),
-                    vapid_private_key=VAPID_PRIVATE_KEY,
-                    vapid_claims=VAPID_CLAIMS
-                )
-            except WebPushException as e:
-                print(f"Subscription {sub['id']} failed:", str(e))
-                if "push subscription has unsubscribed or expired" in str(e):
-                    # Delete invalid subscription
-                    httpx.delete(
-                        f"{supabase_url}/rest/v1/push_subscriptions",
-                        headers=headers,
-                        params={"id": f"eq.{sub['id']}"}
-                    )
+                # Marquer la notification comme traitée
+                supabase.table('notifications_queue')\
+                    .update({'processed_at': 'now()'})\
+                    .eq('id', notification['id'])\
+                    .execute()
+                    
+            except Exception as e:
+                # En cas d'erreur, enregistrer l'erreur mais ne pas bloquer les autres notifications
+                print(f"Error processing notification {notification['id']}: {e}")
+                supabase.table('notifications_queue')\
+                    .update({
+                        'processed_at': 'now()',
+                        'error': str(e)
+                    })\
+                    .eq('id', notification['id'])\
+                    .execute()
         
-        return jsonify({'status': 'success'})
-
+        return jsonify({"message": "Notifications processed successfully"}), 200
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
+# Service worker route
+@app.route('/sw.js')
+def service_worker():
+    response = app.send_file('sw.js')
+    # Ajouter les headers de cache appropriés
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

@@ -242,8 +242,7 @@
             if (session) {
                 // Set cookie for backend (expires in 7 days, path=/)
                 document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax`;
-                // Initialize push notifications after successful login
-                initializePushNotifications().catch(console.error);
+                // Redirect to feed page
                 window.location.href = '/feed';
             }
         });

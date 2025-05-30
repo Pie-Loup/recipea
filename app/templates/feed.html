@@ -14,6 +14,16 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_feed.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configure les variables globales -->
+    <script>
+        window.VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+        window.SUPABASE_URL = "{{ supabase_url }}";
+        window.SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        window.client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    </script>
+
+    <!-- Charge les scripts spécifiques -->
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 </head>
 <body>
@@ -24,15 +34,19 @@
     </div>
     <div class="feed-container">
         <div class="nav-container">
-            <button class="new-recipe-btn" onclick="window.location.href='/profile'">Mon Profil</button>
-            <button class="new-recipe-btn" onclick="window.location.href='/create-recipe'">Créer une recette</button>
+            <button class="plain-btn" onclick="window.location.href='/profile'">Mon Profil</button>
+            <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une recette</button>
+            <button class="plain-btn" id="enableNotificationsBtn" onclick="enableNotifications()" style="display: none;">
+                🔔
+            </button>
+            <button class="plain-btn" id="notificationsStatus" style="display: none; background-color: #4CAF50; color: white;">
+                ✓
+            </button>
         </div>
-        <h1>sauce</h1>
         <ul class="feed-list" id="feedList">
             <!-- Feed items will go here -->
         </ul>
-        <button class="new-recipe-btn" onclick="window.location.href='/create-recipe'">Créer une nouvelle recette</button>
-        <button class="new-recipe-btn" style="margin-top:12px" id="logoutBtn">Se déconnecter</button>
+        <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une nouvelle recette</button>
     </div>
     <script>
         // --- Helper: Parse hash params from URL (for Supabase login redirect) ---
@@ -44,21 +58,6 @@
                 return res;
             }, {});
         }
-
-        // Supabase configuration
-        const SUPABASE_URL = "{{ supabase_url }}";
-        const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
-        const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Initialize notifications when page loads
-        window.addEventListener('load', async () => {
-            try {
-                await initializePushNotifications();
-            } catch (error) {
-                console.error('Failed to initialize push notifications:', error);
-            }
-        });
 
         // --- If access_token in hash, store in cookie and clean URL ---
         (async function handleSupabaseLoginRedirect() {
@@ -173,11 +172,100 @@
         // Initial fetch
         fetchRecipes();
 
-        // Logout logic
-        document.getElementById('logoutBtn').onclick = async function() {
-            await client.auth.signOut();
-            window.location.href = '/';
-        };
+        // --- Notifications management ---
+        async function enableNotifications() {
+            try {
+                const enableBtn = document.getElementById('enableNotificationsBtn');
+                const statusBtn = document.getElementById('notificationsStatus');
+                
+                enableBtn.textContent = '⏳';
+                enableBtn.disabled = true;
+                
+                // Specific handling for iOS PWA
+                const isIOSPWA = window.navigator.standalone === true;
+                const isBrave = navigator.brave && await navigator.brave.isBrave();
+                
+                console.log('Browser detection:', {
+                    isIOSPWA,
+                    isBrave,
+                    userAgent: navigator.userAgent,
+                    standalone: window.navigator.standalone
+                });
+                
+                if (isIOSPWA) {
+                    console.log('Detected iOS PWA - applying special handling');
+                    // For iOS PWA, wait a bit longer before requesting permission
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                const result = await initializePushNotifications();
+                
+                if (result) {
+                    enableBtn.style.display = 'none';
+                    statusBtn.style.display = 'inline-block';
+                    console.log('Notifications enabled successfully');
+                } else {
+                    enableBtn.textContent = '❌';
+                    enableBtn.disabled = false;
+                    console.log('Failed to enable notifications');
+                }
+            } catch (error) {
+                console.error('Error enabling notifications:', error);
+                const enableBtn = document.getElementById('enableNotificationsBtn');
+                enableBtn.textContent = '❌';
+                enableBtn.disabled = false;
+                
+                // Show more specific error for debugging
+                if (error.message.includes('AbortError')) {
+                    console.log('AbortError detected - this is common on Brave/iOS');
+                }
+            }
+        }
+
+        // Check notification status on page load
+        window.addEventListener('load', async () => {
+            const enableBtn = document.getElementById('enableNotificationsBtn');
+            const statusBtn = document.getElementById('notificationsStatus');
+            
+            // Check if notifications are supported
+            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.log('Notifications not supported on this platform');
+                return;
+            }
+            
+            // Special check for iOS PWA
+            const isIOSPWA = window.navigator.standalone === true;
+            if (isIOSPWA) {
+                console.log('iOS PWA detected - checking notification capabilities');
+                // On iOS PWA, notifications might have different behavior
+                if (Notification.permission === 'denied') {
+                    console.log('iOS PWA: Notifications denied');
+                    return;
+                }
+            }
+            
+            // Check notification permission
+            if (Notification.permission === 'granted') {
+                // Check if we have an active subscription
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration('/static/sw.js');
+                    if (registration) {
+                        const subscription = await registration.pushManager.getSubscription();
+                        if (subscription) {
+                            statusBtn.style.display = 'inline-block';
+                            console.log('Existing notification subscription found');
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Error checking subscription:', error);
+                }
+            }
+            
+            // Show enable button if notifications are not set up
+            console.log('Showing notification enable button');
+            enableBtn.style.display = 'inline-block';
+        });
     </script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>

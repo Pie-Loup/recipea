@@ -34,6 +34,45 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Push notification event
+self.addEventListener('push', function(event) {
+    if (!event.data) {
+        console.log('Push event but no data');
+        return;
+    }
+
+    const data = event.data.json();
+    
+    const options = {
+        body: data.body,
+        icon: data.icon,
+        badge: data.badge,
+        data: data.data,
+        actions: [
+            {
+                action: 'view',
+                title: 'View Profile'
+            }
+        ]
+    };
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, options)
+    );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+
+    if (event.action === 'view' || !event.action) {
+        // Ouvrir l'URL du profil quand on clique sur la notification
+        event.waitUntil(
+            clients.openWindow(event.notification.data.url)
+        );
+    }
+});
+
 // Fetch event
 self.addEventListener('fetch', (event) => {
   // Network-first strategy for API calls
@@ -65,32 +104,5 @@ self.addEventListener('fetch', (event) => {
             return response;
           });
       })
-  );
-});
-
-// Push event
-self.addEventListener('push', event => {
-  const data = event.data.json();
-  const options = {
-    body: data.message,
-    icon: '/static/favicon.png',
-    badge: '/static/favicon.png',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/feed'
-    }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('Sauce', options)
-  );
-});
-
-// Notification click event
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url)
   );
 });

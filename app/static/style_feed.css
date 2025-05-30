@@ -115,24 +115,6 @@
     color: var(--primary-color);
 }
 
-/* Styles spécifiques pour le bouton de nouvelle recette */
-.new-recipe-btn { 
-    display: block; 
-    padding: 12px 32px; 
-    background: var(--primary-color); 
-    color: var(--text-color-light); 
-    border: none; 
-    border-radius: 8px; 
-    font-size: 1.1em; 
-    cursor: pointer; 
-    transition: background-color 0.2s;
-    margin: 0;
-}
-
-.new-recipe-btn:hover { 
-    background: var(--primary-color-dark); 
-}
-
 /* Styles pour mobile */
 @media (max-width: 768px) {
     .feed-container {
