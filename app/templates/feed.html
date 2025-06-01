@@ -39,8 +39,11 @@
             <button class="plain-btn" id="enableNotificationsBtn" onclick="enableNotifications()" style="display: none;">
                 🔔
             </button>
-            <button class="plain-btn" id="notificationsStatus" style="display: none; background-color: #4CAF50; color: white;">
+            <button class="plain-btn" id="notificationsStatus" onclick="disableNotifications()" style="display: none; background-color: #4CAF50; color: white;" title="Cliquez pour désactiver les notifications">
                 ✓
+            </button>
+            <button class="plain-btn" id="testNotificationBtn" onclick="testNotification()" style="display: none; background-color: #2196F3; color: white;">
+                🧪
             </button>
         </div>
         <ul class="feed-list" id="feedList">
@@ -149,7 +152,7 @@
                             </div>
                             <div class="feed-item-actions">
                                 <button class="action-button">
-                                    ❤️ J'aime
+                                    🌶️ Saucer
                                 </button>
                                 <button class="action-button">
                                     🔁 Repost
@@ -201,6 +204,8 @@
                 if (result) {
                     enableBtn.style.display = 'none';
                     statusBtn.style.display = 'inline-block';
+                    document.getElementById('testNotificationBtn').style.display = 'inline-block';
+                    
                     console.log('Notifications enabled successfully');
                 } else {
                     enableBtn.textContent = '❌';
@@ -217,10 +222,130 @@
             }
         }
 
+        // Test notification function
+        async function testNotification() {
+            try {
+                const testBtn = document.getElementById('testNotificationBtn');
+                const originalText = testBtn.textContent;
+                testBtn.textContent = '⏳ Envoi...';
+                testBtn.disabled = true;
+                
+                const response = await fetch('/api/test-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    testBtn.textContent = '✓ Envoyé';
+                    testBtn.style.backgroundColor = '#4CAF50';
+                    alert(`✅ ${result.message}`);
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        testBtn.textContent = originalText;
+                        testBtn.style.backgroundColor = '#2196F3';
+                        testBtn.disabled = false;
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Failed to send test notification');
+                }
+            } catch (error) {
+                console.error('Error sending test notification:', error);
+                const testBtn = document.getElementById('testNotificationBtn');
+                testBtn.textContent = '❌ Erreur';
+                testBtn.style.backgroundColor = '#f44336';
+                alert(`❌ Erreur: ${error.message}`);
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    testBtn.textContent = '🧪 Test';
+                    testBtn.style.backgroundColor = '#2196F3';
+                    testBtn.disabled = false;
+                }, 3000);
+            }
+        }
+
+        // Disable notifications function
+        async function disableNotifications() {
+            try {
+                const statusBtn = document.getElementById('notificationsStatus');
+                const enableBtn = document.getElementById('enableNotificationsBtn');
+                const testBtn = document.getElementById('testNotificationBtn');
+                
+                // Confirm with user
+                if (!confirm('Êtes-vous sûr de vouloir désactiver les notifications push ?')) {
+                    return;
+                }
+                
+                statusBtn.textContent = '⏳';
+                statusBtn.disabled = true;
+                
+                // Get current subscription
+                const registration = await navigator.serviceWorker.getRegistration('/static/sw.js');
+                if (registration) {
+                    const subscription = await registration.pushManager.getSubscription();
+                    if (subscription) {
+                        // Unsubscribe from the service worker
+                        await subscription.unsubscribe();
+                        
+                        // Remove from backend database
+                        const response = await fetch('/api/unsubscribe', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                endpoint: subscription.endpoint
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            // Update UI
+                            statusBtn.style.display = 'none';
+                            testBtn.style.display = 'none';
+                            enableBtn.style.display = 'inline-block';
+                            enableBtn.textContent = '🔔';
+                            enableBtn.disabled = false;
+                            
+                            alert('✅ Notifications désactivées avec succès !');
+                            console.log('Notifications disabled successfully');
+                        } else {
+                            throw new Error(result.error || 'Failed to unsubscribe from backend');
+                        }
+                    } else {
+                        throw new Error('No active subscription found');
+                    }
+                } else {
+                    throw new Error('Service worker not registered');
+                }
+            } catch (error) {
+                console.error('Error disabling notifications:', error);
+                const statusBtn = document.getElementById('notificationsStatus');
+                statusBtn.textContent = '❌';
+                statusBtn.disabled = false;
+                alert(`❌ Erreur lors de la désactivation: ${error.message}`);
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    statusBtn.textContent = '✓';
+                    statusBtn.disabled = false;
+                }, 3000);
+            }
+        }
+
         // Check notification status on page load
         window.addEventListener('load', async () => {
             const enableBtn = document.getElementById('enableNotificationsBtn');
             const statusBtn = document.getElementById('notificationsStatus');
+            const testBtn = document.getElementById('testNotificationBtn');
             
             // Check if notifications are supported
             if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -247,7 +372,10 @@
                     if (registration) {
                         const subscription = await registration.pushManager.getSubscription();
                         if (subscription) {
+                            enableBtn.style.display = 'none';
                             statusBtn.style.display = 'inline-block';
+                            testBtn.style.display = 'inline-block';
+                            
                             console.log('Existing notification subscription found');
                             return;
                         }

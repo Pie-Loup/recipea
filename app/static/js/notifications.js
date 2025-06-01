@@ -238,7 +238,7 @@ async function subscribeToPushNotifications() {
         
         // Envoyer la souscription au serveur
         console.log('Sending subscription to server:', subscription);
-        const subscribeResponse = await fetch('/subscribe', {
+        const subscribeResponse = await fetch('/api/subscribe', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -263,7 +263,7 @@ async function subscribeToPushNotifications() {
 
 // Envoie la souscription au serveur
 async function sendSubscriptionToServer(subscription) {
-    const response = await fetch('/subscribe', {
+    const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

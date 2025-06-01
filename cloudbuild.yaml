@@ -2,29 +2,18 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # Build the container image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/sauce-app:$COMMIT_SHA', './app']
-  
-  # Push the container image to Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/sauce-app:$COMMIT_SHA']
-  
-  # Deploy container image to Cloud Run
+  # Build and deploy container image directly to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
       - 'sauce-app'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/sauce-app:$COMMIT_SHA'
+      - '--source'
+      - './app'
       - '--region'
       - 'us-central1'
       - '--port'
       - '5001'
       - '--set-env-vars'
       - 'GEMINI_API_KEY=${_GEMINI_API_KEY},SUPABASE_JWT_SECRET=${_SUPABASE_JWT_SECRET},SUPABASE_PROJECT_ID=${_SUPABASE_PROJECT_ID},SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY},SUPABASE_URL=${_SUPABASE_URL},VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY}'
-
-images:
-  - 'gcr.io/$PROJECT_ID/sauce-app:$COMMIT_SHA'
