@@ -2,18 +2,48 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # Build and deploy container image directly to Cloud Run
+  # Build the container image with a simple tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sauce-app:latest', './app']
+  
+  # Push the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sauce-app:latest']
+  
+  # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
       - 'sauce-app'
-      - '--source'
-      - './app'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sauce-app:latest'
       - '--region'
       - 'us-central1'
       - '--port'
       - '5001'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--max-instances'
+      - '10'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
       - '--set-env-vars'
-      - 'GEMINI_API_KEY=${_GEMINI_API_KEY},SUPABASE_JWT_SECRET=${_SUPABASE_JWT_SECRET},SUPABASE_PROJECT_ID=${_SUPABASE_PROJECT_ID},SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY},SUPABASE_URL=${_SUPABASE_URL},VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY}'
+      - 'GEMINI_API_KEY=${_GEMINI_API_KEY},SUPABASE_JWT_SECRET=${_SUPABASE_JWT_SECRET},SUPABASE_PROJECT_ID=${_SUPABASE_PROJECT_ID},SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY},SUPABASE_URL=${_SUPABASE_URL},SUPABASE_SERVICE_KEY=${_SUPABASE_SERVICE_KEY},VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY},CONTACT_EMAIL=${_CONTACT_EMAIL}'
+  
+  # Clean up old images (keep only latest)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get all image digests except the latest one we just pushed
+        OLD_IMAGES=$$(gcloud artifacts docker images list us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sauce-app --format="value(digest)" --filter="-tags:latest" --limit=10)
+        for digest in $$OLD_IMAGES; do
+          echo "Deleting old image: $$digest"
+          gcloud artifacts docker images delete us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sauce-app@$$digest --quiet || true
+        done
