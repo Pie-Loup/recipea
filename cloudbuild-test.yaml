@@ -28,7 +28,3 @@ steps:
       - '--allow-unauthenticated'
       - '--max-instances'
       - '10'
-      - '--memory'
-      - '1Gi'
-      - '--cpu'
-      - '1'

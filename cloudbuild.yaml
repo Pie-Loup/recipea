@@ -28,10 +28,6 @@ steps:
       - '--allow-unauthenticated'
       - '--max-instances'
       - '10'
-      - '--memory'
-      - '1Gi'
-      - '--cpu'
-      - '1'
       - '--set-env-vars'
       - 'GEMINI_API_KEY=${_GEMINI_API_KEY},SUPABASE_JWT_SECRET=${_SUPABASE_JWT_SECRET},SUPABASE_PROJECT_ID=${_SUPABASE_PROJECT_ID},SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY},SUPABASE_URL=${_SUPABASE_URL},SUPABASE_SERVICE_KEY=${_SUPABASE_SERVICE_KEY},VAPID_PUBLIC_KEY=${_VAPID_PUBLIC_KEY},VAPID_PRIVATE_KEY=${_VAPID_PRIVATE_KEY},CONTACT_EMAIL=${_CONTACT_EMAIL}'
   

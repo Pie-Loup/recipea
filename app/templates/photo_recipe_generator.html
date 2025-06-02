@@ -34,6 +34,7 @@
     </div>
   </div>
 
+  <script src="/static/js/async-recipe-generator.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "{{ supabase_url }}";
@@ -95,6 +96,12 @@
     }
 
     let currentRecipe = null;
+    let asyncRecipeGenerator = null;
+
+    // Initialize the async recipe generator when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      asyncRecipeGenerator = new AsyncRecipeGenerator();
+    });
 
     function displayRecipe(data) {
       const recipeDiv = document.getElementById('recipe');
@@ -161,19 +168,11 @@
       generateBtn.disabled = true;
       generateBtn.textContent = 'Génération en cours...';
 
-      const formData = new FormData();
-      formData.append('photo', file);
-
       try {
-        const response = await fetch('/generate_recipe_from_photo', {
-          method: 'POST',
-          body: formData
+        const data = await asyncRecipeGenerator.generateFromPhoto(file, (progress) => {
+          // Update button text with progress feedback
+          generateBtn.textContent = 'Génération en cours...';
         });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
 
         currentRecipe = data;
         displayRecipe(data);
@@ -202,21 +201,10 @@
       updateBtn.textContent = 'Modification en cours...';
 
       try {
-        const response = await fetch('/update_recipe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            recipe: currentRecipe,
-            user_comments: text
-          })
+        const data = await asyncRecipeGenerator.updateRecipe(currentRecipe, text, (progress) => {
+          // Update button text with progress feedback
+          updateBtn.textContent = 'Modification en cours...';
         });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
 
         currentRecipe = data;
         displayRecipe(data);

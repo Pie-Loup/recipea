@@ -94,21 +94,19 @@ async function generateRecipe() {
   recipeDiv.innerHTML = "<p>Génération de la recette en cours...</p>";
   recipeDiv.classList.add('visible');
   
+  // Initialize async recipe generator
+  const generator = new AsyncRecipeGenerator();
+  
   try {
-    const formData = new FormData();
-    audioBlobs.forEach((blob, i) => {
-      formData.append('audio', blob, `audio${i+1}.wav`);
-    });
+    // Convert blobs to files for the async generator
+    const audioFiles = audioBlobs.map((blob, i) => 
+      new File([blob], `audio${i+1}.wav`, { type: 'audio/wav' })
+    );
     
-    const res = await fetch('/generate_recipe_from_voice', {
-      method: 'POST',
-      body: formData
+    // Generate recipe with progress updates
+    const data = await generator.generateFromVoice(audioFiles, (status) => {
+      recipeDiv.innerHTML = `<p>${status}</p>`;
     });
-    
-    const data = await res.json();
-    if (data.error) {
-      throw new Error(data.error);
-    }
     
     if (!data.is_recipe) {
       recipeDiv.innerHTML = `
