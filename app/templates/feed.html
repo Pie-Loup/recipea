@@ -230,12 +230,27 @@
                 testBtn.textContent = '⏳ Envoi...';
                 testBtn.disabled = true;
                 
-                const response = await fetch('/api/test-notification', {
+                // Données de notification de test
+                const testNotificationData = {
+                    "title": "🧪 Test Notification",
+                    "body": "Ceci est un test de notification push. Si vous voyez ceci, ça fonctionne !",
+                    "icon": "/static/icon.png",
+                    "badge": "/static/badge.png",
+                    "data": {
+                        "type": "test",
+                        "url": "/feed"
+                    }
+                };
+                
+                const response = await fetch('/api/send-notification', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        notification_data: testNotificationData
+                    })
                 });
                 
                 const result = await response.json();

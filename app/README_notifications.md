@@ -40,11 +40,27 @@ Subscribe a user to push notifications.
 }
 ```
 
-### POST `/api/test-notification`
-Send a test notification to the authenticated user.
+### POST `/api/send-notification`
+Send a custom notification to the authenticated user.
 
 **Headers:**
 - `Authorization: Bearer <token>` or Cookie with `sb-access-token`
+
+**Body:**
+```json
+{
+  "notification_data": {
+    "title": "Notification Title",
+    "body": "Notification message",
+    "icon": "/static/icon.png",
+    "badge": "/static/badge.png",
+    "data": {
+      "type": "custom",
+      "url": "/target-page"
+    }
+  }
+}
+```
 
 **Response:**
 ```json

@@ -20,7 +20,7 @@ Successfully moved all notification-related routes from `app.py` to a separate `
 ### 3. ✅ Updated frontend JavaScript
 - Updated `/static/js/notifications.js`: `/subscribe` → `/api/subscribe`
 - Updated `/templates/feed.html`: 
-  - `/test-notification` → `/api/test-notification`
+  - `/test-notification` → `/api/send-notification`
   - `/unsubscribe` → `/api/unsubscribe`
 - Service worker registration remains at `/static/sw.js` (correct)
 
@@ -36,7 +36,7 @@ Successfully moved all notification-related routes from `app.py` to a separate `
 | VAPID Public Key | GET | Get VAPID public key | `/api/vapid-public-key` |
 | Subscribe | POST | Subscribe to push notifications | `/api/subscribe` |
 | Unsubscribe | POST | Unsubscribe from notifications | `/api/unsubscribe` |
-| Test Notification | POST | Send test notification | `/api/test-notification` |
+| Send Notification | POST | Send custom notification | `/api/send-notification` |
 | Service Worker | GET | Serve service worker file | `/api/sw.js` |
 
 ## Files Modified
@@ -55,7 +55,7 @@ To verify the refactoring works correctly:
 - [ ] Test user login and authentication
 - [ ] Test notification subscription (`/api/subscribe`)
 - [ ] Test notification unsubscription (`/api/unsubscribe`) 
-- [ ] Test sending test notifications (`/api/test-notification`)
+- [ ] Test sending custom notifications (`/api/send-notification`)
 - [ ] Verify VAPID public key endpoint (`/api/vapid-public-key`)
 - [ ] Verify service worker loads correctly
 

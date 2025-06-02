@@ -109,35 +109,77 @@
 
         // Toggle follow/unfollow
         async function toggleFollow(targetUserId) {
-            if (followingUsers.has(targetUserId)) {
-                // Unfollow
-                const { error } = await client
-                    .from('follows')
-                    .delete()
-                    .eq('follower_id', currentUser.id)
-                    .eq('following_id', targetUserId);
+            try {
+                if (followingUsers.has(targetUserId)) {
+                    // Unfollow
+                    const { error } = await client
+                        .from('follows')
+                        .delete()
+                        .eq('follower_id', currentUser.id)
+                        .eq('following_id', targetUserId);
 
-                if (!error) {
-                    followingUsers.delete(targetUserId);
+                    if (!error) {
+                        followingUsers.delete(targetUserId);
+                        console.log('Successfully unfollowed user');
+                    } else {
+                        console.error('Error unfollowing user:', error);
+                        alert('Erreur lors du désabonnement');
+                        return;
+                    }
+                } else {
+                    // Follow with notification
+                    // First get the target user's username
+                    const { data: targetUser, error: userError } = await client
+                        .from('user_profiles')
+                        .select('username')
+                        .eq('id', targetUserId)
+                        .single();
+
+                    if (userError || !targetUser) {
+                        console.error('Error getting target user:', userError);
+                        alert('Erreur lors de la récupération du profil utilisateur');
+                        return;
+                    }
+
+                    // Use our backend route to follow and send notification
+                    const response = await fetch('/api/send-follow-notification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            followed_username: targetUser.username
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        followingUsers.add(targetUserId);
+                        console.log('Successfully followed user with notification:', result.message);
+                        
+                        // Show a success message
+                        const successMsg = document.createElement('div');
+                        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px 20px; border-radius: 4px; z-index: 1000;';
+                        successMsg.textContent = `Vous suivez maintenant @${targetUser.username} ! 🎉`;
+                        document.body.appendChild(successMsg);
+                        setTimeout(() => successMsg.remove(), 3000);
+                    } else {
+                        console.error('Error following user:', result.error);
+                        alert(`Erreur lors du suivi: ${result.error}`);
+                        return;
+                    }
                 }
-            } else {
-                // Follow
-                const { error } = await client
-                    .from('follows')
-                    .insert([
-                        { follower_id: currentUser.id, following_id: targetUserId }
-                    ]);
 
-                if (!error) {
-                    followingUsers.add(targetUserId);
+                // Refresh the display
+                await loadFollowing();
+                const searchQuery = document.getElementById('searchInput').value;
+                if (searchQuery) {
+                    await searchUsers(searchQuery);
                 }
-            }
-
-            // Refresh the display
-            await loadFollowing();
-            const searchQuery = document.getElementById('searchInput').value;
-            if (searchQuery) {
-                await searchUsers(searchQuery);
+            } catch (error) {
+                console.error('Unexpected error in toggleFollow:', error);
+                alert('Une erreur inattendue s\'est produite');
             }
         }
 
