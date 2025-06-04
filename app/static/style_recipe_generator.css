@@ -25,7 +25,7 @@ h1 {
     transition: border-color 0.2s;
 }
 .upload-area:hover {
-    border-color: var(text-color-dark);
+    border-color: var(--border-color);
 }
 .upload-icon {
     font-size: 48px;

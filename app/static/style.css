@@ -20,10 +20,6 @@
     --gray-400: #666;
     --gray-600: #333;
     
-    /* Couleurs des réseaux sociaux */
-    --google-blue: #4285F4;
-    --facebook-blue: #3b5998;
-    
     /* Autres couleurs */
     --pure-white: #fff;
 }
@@ -56,9 +52,6 @@
     --main-button-hover: var(--dark-red);
     --main-button-text-color: var(--light-color);
 
-    /* Réseaux sociaux */
-    --google-color: var(--google-blue);
-    --facebook-color: var(--facebook-blue);
 }
 
 /* Appliquer Fredoka à tous les éléments */
@@ -169,6 +162,9 @@ h1, h2 {
     padding: 0.75rem;
     border-radius: 4px;
     font-size: 1rem;
+}
+.login-btn:hover {
+    background: var(--primary-color-dark);
 }
 
 /* Styles pour les formulaires */
@@ -318,8 +314,44 @@ textarea, .search-input {
 }
 
 /* Boutons de réseaux sociaux */
-.google { background: var(--google-color); }
-.facebook { background: var(--facebook-color); }
+.google, .facebook { 
+    background: var(--background-color); 
+    color: var(--dark-color);
+    /* add a dark border */
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.google:hover, .facebook:hover {
+    background: var(--gray-200);
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* Logos des providers */
+.provider-logo {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Conteneur pour centrer le texte */
+.provider-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Espaceur invisible pour équilibrer */
+.provider-spacer {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    visibility: hidden;
+}
 
 /* Messages de succès */
 .success-message {
@@ -359,7 +391,7 @@ textarea, .search-input {
 
 .pwa-prompt button {
     background-color: white;
-    color: var(--dark-yellow);
+    color: var(--dark-color);
     border: none;
     padding: 6px 12px;
     margin: 0 6px;

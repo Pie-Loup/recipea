@@ -34,8 +34,16 @@
             <div class="tab" onclick="switchTab('reset')">Mot de passe oublié</div>
         </div>
 
-        <button class="login-btn google" onclick="loginWithProvider('google')">Continuer avec Google</button>
-        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">Continuer avec Facebook</button>
+        <button class="login-btn google" onclick="loginWithProvider('google')">
+            <img src="{{ url_for('static', filename='login/google_logo.svg') }}" alt="Google" class="provider-logo">
+            <span class="provider-text">Continuer avec Google</span>
+            <div class="provider-spacer"></div>
+        </button>
+        <button class="login-btn facebook" onclick="loginWithProvider('facebook')">
+            <img src="{{ url_for('static', filename='login/facebook_logo.svg') }}" alt="Facebook" class="provider-logo">
+            <span class="provider-text">Continuer avec Facebook</span>
+            <div class="provider-spacer"></div>
+        </button>
 
         <div class="divider">
             <span style="background-color: transparent;">ou</span>
