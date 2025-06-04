@@ -135,13 +135,14 @@
                 }
 
                 const recipesHtml = recipes.map(recipe => `
-                    <li class="feed-item">                                <div class="feed-item-header">
-                                    <img src="/static/favicon.png" alt="${recipe.user_profiles ? recipe.user_profiles.username : 'Utilisateur inconnu'}" />
-                                    <div>
-                                        <p class="feed-item-user">@${recipe.user_profiles ? recipe.user_profiles.username : 'Utilisateur inconnu'}</p>
-                                        <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
-                                    </div>
-                                </div>
+                    <li class="feed-item">
+                        <div class="feed-item-header">
+                            <img src="/static/favicon.png" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
+                            <div>
+                                <p class="feed-item-user">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</p>
+                                <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
+                            </div>
+                        </div>
                         <img class="feed-item-image" src="/static/default/default_recipe.jpg" alt="${recipe.title}" />
                         <div class="feed-item-content">
                             <h2 class="feed-item-title">${recipe.title}</h2>

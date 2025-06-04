@@ -21,17 +21,37 @@ def load_vapid_private_key():
     # Try to get from environment first
     vapid_key = os.environ.get('VAPID_PRIVATE_KEY')
     
+    print(f"🔐 Loading VAPID private key...")
+    print(f"Environment variable present: {'yes' if vapid_key else 'no'}")
+    
     if vapid_key:
+        print(f"Raw key length: {len(vapid_key)}")
+        print(f"Key starts with: {vapid_key[:50]}...")
+        print(f"Key ends with: ...{vapid_key[-50:]}")
+        
         # If it looks like a file path, read the file
         if vapid_key.endswith('.pem') and os.path.exists(vapid_key):
             with open(vapid_key, 'r') as f:
                 key_content = f.read().strip()
                 print("✅ VAPID private key loaded from file")
+                print(f"File key length: {len(key_content)}")
                 return key_content
         else:
-            # Return the key directly
+            # Return the key directly, but clean it first
+            cleaned_key = vapid_key.strip()
+            
+            # Check if the key has the proper PEM format
+            if not cleaned_key.startswith('-----BEGIN'):
+                print("❌ Key doesn't start with proper PEM header")
+                print(f"Key actually starts with: {cleaned_key[:100]}")
+            
+            if not cleaned_key.endswith('-----'):
+                print("❌ Key doesn't end with proper PEM footer") 
+                print(f"Key actually ends with: {cleaned_key[-100:]}")
+            
             print("✅ VAPID private key loaded from environment variable")
-            return vapid_key
+            print(f"Cleaned key length: {len(cleaned_key)}")
+            return cleaned_key
     
     # Fallback to reading from vapid_private.pem file
     vapid_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'vapid_private.pem')
@@ -39,6 +59,7 @@ def load_vapid_private_key():
         with open(vapid_file, 'r') as f:
             key_content = f.read().strip()
             print(f"✅ VAPID private key loaded from file: {vapid_file}")
+            print(f"File key length: {len(key_content)}")
             return key_content
     
     raise RuntimeError("❌ VAPID_PRIVATE_KEY not found in environment or file")
@@ -47,7 +68,8 @@ def load_vapid_private_key():
 supabase_url = get_env_variable('SUPABASE_URL')
 supabase_service_key = get_env_variable('SUPABASE_SERVICE_KEY')
 VAPID_PUBLIC_KEY = get_env_variable('VAPID_PUBLIC_KEY')
-VAPID_PRIVATE_KEY = load_vapid_private_key()
+VAPID_PRIVATE_KEY = get_env_variable('VAPID_PRIVATE_KEY')
+print(f"🔐 VAPID_PRIVATE_KEY loaded: {len(VAPID_PRIVATE_KEY)} characters")
 CONTACT_EMAIL = get_env_variable('CONTACT_EMAIL', 'push.notifications@sauce.cool')
 
 def get_vapid_claims(endpoint):
@@ -160,51 +182,81 @@ def subscribe():
 @login_required
 def send_notification():
     """Endpoint générique pour envoyer des notifications push"""
+    print("\n=== Send Notification Request ===")
     try:
         # Récupérer l'ID de l'utilisateur connecté
         token = request.cookies.get('sb-access-token')
+        print(f"Token present: {'yes' if token else 'no'}")
         if not token:
             return jsonify({"error": "Not authenticated"}), 401
             
         # Décoder le token pour obtenir l'ID utilisateur
         payload = jwt.decode(token, options={"verify_signature": False})
         user_id = payload.get('sub')
+        print(f"Successfully decoded token. User ID: {user_id}")
         
         # Récupérer les données de notification depuis la requête
         request_data = request.get_json()
+        print(f"\nReceived request data: {request_data}")
         if not request_data or 'notification_data' not in request_data:
+            print("Error: Missing notification_data in request")
             return jsonify({"error": "Missing notification_data in request"}), 400
         
         notification_data = request_data['notification_data']
+        print(f"Notification data: {notification_data}")
         
         # Valider les données de notification requises
         if not notification_data or not isinstance(notification_data, dict):
+            print("Error: notification_data must be a valid dictionary")
             return jsonify({"error": "notification_data must be a valid dictionary"}), 400
         
         if 'title' not in notification_data or 'body' not in notification_data:
+            print("Error: notification_data must contain at least 'title' and 'body'")
             return jsonify({"error": "notification_data must contain at least 'title' and 'body'"}), 400
         
         # Créer une connexion Supabase avec la clé service pour contourner RLS
         supabase = create_client(supabase_url, supabase_service_key)
         
         # Récupérer les souscriptions push de l'utilisateur
+        print(f"\nQuerying push_subscriptions for user_id: {user_id}")
         subscriptions = supabase.table('push_subscriptions')\
             .select('*')\
             .eq('user_id', user_id)\
             .execute()
         
+        print(f"Subscriptions query result: {subscriptions}")
+        print(f"Number of subscriptions found: {len(subscriptions.data) if subscriptions.data else 0}")
+        
         if not subscriptions.data:
+            print("No push subscriptions found for this user")
             return jsonify({"message": "No push subscriptions found. Please enable notifications first."}), 200
         
         # Envoyer la notification à toutes les souscriptions de l'utilisateur
         notifications_sent = 0
-        for subscription in subscriptions.data:
+        print(f"\nStarting to send notifications to {len(subscriptions.data)} subscription(s)")
+        for i, subscription in enumerate(subscriptions.data):
+            print(f"\n--- Processing subscription {i+1}/{len(subscriptions.data)} ---")
+            print(f"Subscription ID: {subscription['id']}")
+            print(f"Endpoint: {subscription['endpoint'][:50]}...")
             try:
                 # Generate VAPID claims with correct audience for this endpoint
                 vapid_claims = get_vapid_claims(subscription['endpoint'])
                 
                 print(f"Sending push notification to endpoint: {subscription['endpoint'][:50]}...")
                 print(f"VAPID claims: {vapid_claims}")
+                
+                # Debug VAPID key before using it
+                print(f"🔐 VAPID private key validation:")
+                print(f"Key type: {type(VAPID_PRIVATE_KEY)}")
+                print(f"Key length: {len(VAPID_PRIVATE_KEY)}")
+                print(f"Key starts with: {VAPID_PRIVATE_KEY[:50]}...")
+                print(f"Key ends with: ...{VAPID_PRIVATE_KEY[-50:]}")
+                
+                # Validate PEM format
+                if not VAPID_PRIVATE_KEY.startswith('-----BEGIN'):
+                    raise ValueError("VAPID private key does not start with proper PEM header")
+                if not VAPID_PRIVATE_KEY.endswith('-----'):
+                    raise ValueError("VAPID private key does not end with proper PEM footer")
                 
                 webpush(
                     subscription_info={
@@ -239,11 +291,15 @@ def send_notification():
         return jsonify({
             "message": f"Notification sent successfully to {notifications_sent} device(s)",
             "subscriptions_found": len(subscriptions.data),
-            "notifications_sent": notifications_sent
+            "notifications_sent": notifications_sent,
+            "user_id": user_id  # Ajout pour debug
         }), 200
         
     except Exception as e:
+        print(f"\n=== Error in send_notification endpoint ===")
         print(f"Error sending notification: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @notifications_bp.route('/unsubscribe', methods=['POST'])
@@ -395,7 +451,7 @@ def send_follow_notification_endpoint():
         supabase = create_client(supabase_url, supabase_service_key)
         
         # Récupérer le profil de l'utilisateur qui suit pour obtenir son username
-        follower_profile = supabase.table('user_profiles')\
+        follower_profile = supabase.table('profiles')\
             .select('username')\
             .eq('id', follower_user_id)\
             .execute()
@@ -406,7 +462,7 @@ def send_follow_notification_endpoint():
         follower_username = follower_profile.data[0]['username']
         
         # Récupérer l'ID de l'utilisateur suivi à partir de son username
-        followed_profile = supabase.table('user_profiles')\
+        followed_profile = supabase.table('profiles')\
             .select('id')\
             .eq('username', followed_username)\
             .execute()

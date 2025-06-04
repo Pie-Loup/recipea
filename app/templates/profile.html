@@ -20,7 +20,7 @@
 
         <div class="search-container">
             <h2>Rechercher des utilisateurs</h2>
-            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par nom d'utilisateur, nom ou email..." oninput="debounceSearch()">
+            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher par nom d'utilisateur ou nom..." oninput="debounceSearch()">
             <div id="searchResults" class="search-results"></div>
         </div>
 
@@ -66,11 +66,11 @@
                     return;
                 }
 
-                // Use the user_profiles table for search
+                // Use the profiles table for search
                 const { data: users, error } = await client
-                    .from('user_profiles')
-                    .select('id, email, username, full_name')
-                    .or(`email.ilike.%${query}%,username.ilike.%${query}%,full_name.ilike.%${query}%`)
+                    .from('profiles')
+                    .select('id, username')
+                    .or(`username.ilike.%${query}%`)
                     .neq('id', currentUser.id)
                     .limit(5);
 
@@ -84,7 +84,7 @@
                 const resultsDiv = document.getElementById('searchResults');
                 resultsDiv.innerHTML = users.map(user => `
                     <div class="search-item">
-                        <span>${user.username || user.full_name || user.email}</span>
+                        <span>${user.username || user.full_name}</span>
                         <button 
                             onclick="toggleFollow('${user.id}')"
                             class="follow-btn ${followingUsers.has(user.id) ? 'unfollow-btn' : ''}"
@@ -130,7 +130,7 @@
                     // Follow with notification
                     // First get the target user's username
                     const { data: targetUser, error: userError } = await client
-                        .from('user_profiles')
+                        .from('profiles')
                         .select('username')
                         .eq('id', targetUserId)
                         .single();
@@ -221,7 +221,7 @@
                 // Display the following list
                 followingDiv.innerHTML = following.map(follow => `
                     <div class="following-item">
-                        <span>${follow.following ? (follow.following.username || follow.following.full_name || follow.following.email || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
+                        <span>${follow.following ? (follow.following.username || follow.following.full_name || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
                         <button 
                             onclick="toggleFollow('${follow.following_id}')"
                             class="follow-btn unfollow-btn"
@@ -272,7 +272,7 @@
 
                 followersDiv.innerHTML = followers.map(f => `
                     <div class="following-item">
-                        <span>${f.follower ? (f.follower.username || f.follower.full_name || f.follower.email || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
+                        <span>${f.follower ? (f.follower.username || f.follower.full_name || 'Utilisateur inconnu') : 'Utilisateur inconnu'}</span>
                     </div>
                 `).join('');
             } catch (error) {
@@ -291,9 +291,9 @@
             }
 
             currentUser = session.user;
-            // Get the user's username from the user_profiles table
+            // Get the user's username from the profiles table
             const { data: profiles, error: profileError } = await client
-                .from('user_profiles')
+                .from('profiles')
                 .select('username')
                 .eq('id', currentUser.id)
                 .single();

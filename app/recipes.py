@@ -484,6 +484,7 @@ def save_recipe():
 
 @recipes_bp.route('/api/feed/recipes', methods=['GET'])
 def get_feed_recipes():
+    import traceback
     # Apply login_required check manually
     token = request.cookies.get("sb-access-token") or request.headers.get("Authorization", "").replace("Bearer ", "")
     if not token or not verify_supabase_jwt(token):
@@ -491,6 +492,7 @@ def get_feed_recipes():
         return redirect(url_for('index'))
     
     try:
+        print(f"🔍 Fetching recipes with profiles table...")
         # Setup Supabase client with auth headers
         supabase_anon_key, supabase_url, _ = get_supabase_config()
         supabase_client = create_client(supabase_url, supabase_anon_key)
@@ -498,10 +500,12 @@ def get_feed_recipes():
 
         # Fetch the 10 most recent recipes with author information
         result = supabase_client.table('recipes') \
-            .select('*, user_profiles!user_id(username)') \
+            .select('*, profiles!user_id(username)') \
             .order('created_at', desc=True) \
             .limit(10) \
             .execute()
+        
+        print(f"✅ Query successful, got {len(result.data) if result.data else 0} recipes")
         
         if not result.data:
             return jsonify([])
@@ -509,6 +513,8 @@ def get_feed_recipes():
         return jsonify(result.data)
 
     except Exception as e:
+        print(f"❌ Error in get_feed_recipes: {str(e)}")
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         return jsonify({'error': f'Error fetching recipes: {str(e)}'}), 500
 
 # Recipe creation page routes

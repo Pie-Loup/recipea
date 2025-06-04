@@ -7,26 +7,26 @@ create table if not exists public.follows (
     unique(follower_id, following_id)
 );
 
--- Drop existing policies if any
-drop policy if exists "Enable insert for authenticated users following others" on public.follows;
-drop policy if exists "Enable delete for users to unfollow" on public.follows;
-drop policy if exists "Enable read access for authenticated users" on public.follows;
-
 -- Make sure RLS is enabled
 alter table public.follows enable row level security;
 
--- Create or update policies
-create policy "Enable insert for authenticated users following others"
-    on public.follows for insert
-    with check (auth.role() = 'authenticated' and auth.uid() = follower_id);
+CREATE POLICY "Allow all users to view all follows" 
+ON public.follows 
+FOR SELECT 
+TO authenticated, anon 
+USING (true);
 
-create policy "Enable delete for users to unfollow"
-    on public.follows for delete
-    using (auth.role() = 'authenticated' and auth.uid() = follower_id);
+CREATE POLICY "Allow users to insert their own follows" 
+ON public.follows 
+FOR INSERT 
+TO authenticated 
+WITH CHECK ((select auth.uid()) = follower_id);
 
-create policy "Enable read access for authenticated users"
-    on public.follows for select
-    using (auth.role() = 'authenticated');
+CREATE POLICY "Allow users to delete their own follows" 
+ON public.follows 
+FOR DELETE 
+TO authenticated 
+USING ((select auth.uid()) = follower_id);
 
 -- Create followers count function
 create or replace function get_followers_count(user_id uuid)
