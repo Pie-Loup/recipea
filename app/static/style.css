@@ -6,14 +6,13 @@
     /* Couleurs principales */
     --light-red: #E0322C;
     --dark-red: #B02A26;
-    --main-blue: #2196f3;
-    --main-blue-dark: #1976d2;
-    --light-yellow: #f6a800;
-    --dark-yellow: #e19600;
-    --dark-color: #1a1a1a;
+    --light-yellow: #F7B017;
+    --dark-yellow: #F6A800;
+    --dark-color: #2E1F1F;
     --light-color: #FFF7ED;
-    --light-green: #42b883;
-    --dark-green: #2e9e6e;
+    --light-green: #5CB660;
+    --dark-green: #4CAF50;
+    --special-color: #FF9A8B;
     
     /* Nuances de gris */
     --gray-100: #f7f7f7;
@@ -41,6 +40,7 @@
     --white: var(--pure-white);
     --border-color: var(--gray-200);
     --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color-hover: rgba(0, 0, 0, 0.15);
 
     --light-color-background: var(--light-color);
     /* Boutons et actions */
@@ -52,6 +52,10 @@
     --valid-color: var(--light-green);
     --valid-color-hover: var(--dark-green);
     
+    --main-button-color: var(--light-red);
+    --main-button-hover: var(--dark-red);
+    --main-button-text-color: var(--light-color);
+
     /* Réseaux sociaux */
     --google-color: var(--google-blue);
     --facebook-color: var(--facebook-blue);

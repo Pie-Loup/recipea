@@ -492,7 +492,6 @@ def get_feed_recipes():
         return redirect(url_for('index'))
     
     try:
-        print(f"🔍 Fetching recipes with profiles table...")
         # Setup Supabase client with auth headers
         supabase_anon_key, supabase_url, _ = get_supabase_config()
         supabase_client = create_client(supabase_url, supabase_anon_key)
@@ -504,8 +503,6 @@ def get_feed_recipes():
             .order('created_at', desc=True) \
             .limit(10) \
             .execute()
-        
-        print(f"✅ Query successful, got {len(result.data) if result.data else 0} recipes")
         
         if not result.data:
             return jsonify([])

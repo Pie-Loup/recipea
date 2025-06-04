@@ -16,61 +16,13 @@ def get_env_variable(var_name, default=None):
         raise RuntimeError(f"{var_name} is not set in environment variables and no default provided.")
     return value
 
-def load_vapid_private_key():
-    """Load VAPID private key from environment or file"""
-    # Try to get from environment first
-    vapid_key = os.environ.get('VAPID_PRIVATE_KEY')
-    
-    print(f"🔐 Loading VAPID private key...")
-    print(f"Environment variable present: {'yes' if vapid_key else 'no'}")
-    
-    if vapid_key:
-        print(f"Raw key length: {len(vapid_key)}")
-        print(f"Key starts with: {vapid_key[:50]}...")
-        print(f"Key ends with: ...{vapid_key[-50:]}")
-        
-        # If it looks like a file path, read the file
-        if vapid_key.endswith('.pem') and os.path.exists(vapid_key):
-            with open(vapid_key, 'r') as f:
-                key_content = f.read().strip()
-                print("✅ VAPID private key loaded from file")
-                print(f"File key length: {len(key_content)}")
-                return key_content
-        else:
-            # Return the key directly, but clean it first
-            cleaned_key = vapid_key.strip()
-            
-            # Check if the key has the proper PEM format
-            if not cleaned_key.startswith('-----BEGIN'):
-                print("❌ Key doesn't start with proper PEM header")
-                print(f"Key actually starts with: {cleaned_key[:100]}")
-            
-            if not cleaned_key.endswith('-----'):
-                print("❌ Key doesn't end with proper PEM footer") 
-                print(f"Key actually ends with: {cleaned_key[-100:]}")
-            
-            print("✅ VAPID private key loaded from environment variable")
-            print(f"Cleaned key length: {len(cleaned_key)}")
-            return cleaned_key
-    
-    # Fallback to reading from vapid_private.pem file
-    vapid_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'vapid_private.pem')
-    if os.path.exists(vapid_file):
-        with open(vapid_file, 'r') as f:
-            key_content = f.read().strip()
-            print(f"✅ VAPID private key loaded from file: {vapid_file}")
-            print(f"File key length: {len(key_content)}")
-            return key_content
-    
-    raise RuntimeError("❌ VAPID_PRIVATE_KEY not found in environment or file")
-
 # Load environment variables
 supabase_url = get_env_variable('SUPABASE_URL')
 supabase_service_key = get_env_variable('SUPABASE_SERVICE_KEY')
 VAPID_PUBLIC_KEY = get_env_variable('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = get_env_variable('VAPID_PRIVATE_KEY')
 print(f"🔐 VAPID_PRIVATE_KEY loaded: {len(VAPID_PRIVATE_KEY)} characters")
-CONTACT_EMAIL = get_env_variable('CONTACT_EMAIL', 'push.notifications@sauce.cool')
+CONTACT_EMAIL = get_env_variable('CONTACT_EMAIL', 'pie-loup@sauce.cool')
 
 def get_vapid_claims(endpoint):
     """Generate VAPID claims with correct audience for the given endpoint"""
@@ -243,20 +195,6 @@ def send_notification():
                 vapid_claims = get_vapid_claims(subscription['endpoint'])
                 
                 print(f"Sending push notification to endpoint: {subscription['endpoint'][:50]}...")
-                print(f"VAPID claims: {vapid_claims}")
-                
-                # Debug VAPID key before using it
-                print(f"🔐 VAPID private key validation:")
-                print(f"Key type: {type(VAPID_PRIVATE_KEY)}")
-                print(f"Key length: {len(VAPID_PRIVATE_KEY)}")
-                print(f"Key starts with: {VAPID_PRIVATE_KEY[:50]}...")
-                print(f"Key ends with: ...{VAPID_PRIVATE_KEY[-50:]}")
-                
-                # Validate PEM format
-                if not VAPID_PRIVATE_KEY.startswith('-----BEGIN'):
-                    raise ValueError("VAPID private key does not start with proper PEM header")
-                if not VAPID_PRIVATE_KEY.endswith('-----'):
-                    raise ValueError("VAPID private key does not end with proper PEM footer")
                 
                 webpush(
                     subscription_info={

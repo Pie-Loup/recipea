@@ -53,7 +53,7 @@
 
 ### Base de Données
 - Table `follows` : relation follower_id ↔ following_id
-- Table `user_profiles` : données utilisateurs
+- Table `profiles` : données utilisateurs
 - Table `push_subscriptions` : abonnements notifications
 
 ### Sécurité

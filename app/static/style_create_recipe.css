@@ -22,7 +22,7 @@ h1 {
     border-radius: 12px;
     padding: 24px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px var(--shadow-color);
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
     text-decoration: none;
@@ -35,12 +35,12 @@ h1 {
 
 .option-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px var(--shadow-color-hover);
 }
 
 .option-card h2 {
     margin: 0 0 12px 0;
-    color: var(--primary-color);
+    color: var(--text-color-dark);
 }
 
 .option-card p {
@@ -65,7 +65,7 @@ h1 {
     color: var(--text-color-dark);
     text-decoration: none;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
     transition: transform 0.2s, box-shadow 0.2s;
     position: absolute;
     top: 20px;
@@ -74,7 +74,7 @@ h1 {
 
 .back-button:hover {
     transform: translateX(-2px);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 3px 6px var(--shadow-color-hover);
 }
 
 .back-button span {
