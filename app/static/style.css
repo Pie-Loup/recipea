@@ -8,7 +8,7 @@
     --dark-red: #B02A26;
     --light-yellow: #F7B017;
     --dark-yellow: #F6A800;
-    --dark-color: #2E1F1F;
+    --dark-color: #181111;
     --light-color: #FFF7ED;
     --light-green: #5CB660;
     --dark-green: #4CAF50;
@@ -146,7 +146,7 @@ h1, h2 {
     gap: 10px;
 }
 
-.btn, .blue-btn, .login-btn {
+.btn, .main-btn, .login-btn {
     display: block;
     padding: 12px 32px;
     background: var(--primary-color);
@@ -159,7 +159,7 @@ h1, h2 {
     font-weight: 300;
 }
 
-.btn:active, .blue-btn:active {
+.btn:active, .main-btn:active {
     background: var(--primary-color-dark);
 }
 
@@ -347,19 +347,19 @@ textarea, .search-input {
     top: 0;
     left: 0;
     right: 0;
-    background-color: var(--main-blue);
+    background-color: var(--special-color);
     color: white;
     padding: 12px;
     text-align: center;
     font-size: 14px;
     display: none;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .pwa-prompt button {
     background-color: white;
-    color: var(--main-blue);
+    color: var(--dark-yellow);
     border: none;
     padding: 6px 12px;
     margin: 0 6px;
@@ -403,7 +403,7 @@ textarea, .search-input {
 
 .ios-install-content h3 {
     margin-top: 0;
-    color: var(--main-blue);
+    color: var(--dark-color);
 }
 
 .ios-install-content ol {
@@ -417,7 +417,7 @@ textarea, .search-input {
 }
 
 .ios-install-content button {
-    background: var(--main-blue);
+    background: var(--special-color);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -428,7 +428,7 @@ textarea, .search-input {
 }
 
 .ios-install-content button:hover {
-    background: var(--main-blue-dark);
+    background: var(--special-color);
 }
 
 .ios-icon {

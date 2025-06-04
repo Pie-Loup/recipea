@@ -39,7 +39,7 @@ h1 {
 }
 
 /* Button styles */
-.blue-btn {
+.main-btn {
     display: block;
     margin: 0 auto 24px auto;
     padding: 16px 32px;
@@ -51,10 +51,10 @@ h1 {
     cursor: pointer;
     transition: background 0.2s;
 }
-.blue-btn:active { 
+.main-btn:active { 
     background: var(--primary-color-dark); 
 }
-.blue-btn:disabled {
+.main-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
 }
