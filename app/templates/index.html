@@ -232,18 +232,30 @@
 
         // Check session on page load
         client.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
+            console.log('Initial session check:', session);
+            
+            // Only redirect if we have a valid, recent session
+            // This prevents old/stale sessions from auto-logging in
+            if (session && session.expires_at && session.expires_at > Math.floor(Date.now() / 1000)) {
                 window.location.href = '/feed';
             }
         });
 
         // Listen for auth state changes (for after login redirect)
         client.auth.onAuthStateChange((event, session) => {
-            if (session) {
+            console.log('Auth state change:', event, session);
+            
+            // Only redirect if it's a sign in event with a valid session
+            // This prevents automatic redirects on page load
+            if (event === 'SIGNED_IN' && session) {
                 // Set cookie for backend (expires in 7 days, path=/)
                 document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax`;
                 // Redirect to feed page
                 window.location.href = '/feed';
+            } else if (event === 'SIGNED_OUT') {
+                // Clear cookies on sign out
+                document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+                document.cookie = 'sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
             }
         });
 

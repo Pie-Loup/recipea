@@ -316,8 +316,25 @@
 
         // Logout logic
         document.getElementById('logoutBtn').onclick = async function() {
-            await client.auth.signOut();
-            window.location.href = '/';
+            try {
+                // Sign out from Supabase
+                await client.auth.signOut();
+                
+                // Clear all cookies related to authentication
+                document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+                document.cookie = 'sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+                
+                // Clear localStorage and sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Force redirect to home page
+                window.location.replace('/');
+            } catch (error) {
+                console.error('Error during logout:', error);
+                // Force redirect even if there's an error
+                window.location.replace('/');
+            }
         };
     </script>
 </body>
