@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="theme-color" content="#2196f3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -25,6 +24,8 @@
 
     <!-- Charge les scripts spécifiques -->
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
 </head>
 <body>
     <div class="pwa-prompt" id="pwaPrompt">
@@ -34,8 +35,8 @@
     </div>
     <div class="feed-container">
         <div class="nav-container">
-            <button class="plain-btn" onclick="window.location.href='/profile'">Mon Profil</button>
-            <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une recette</button>
+            <button class="plain-btn" onclick="window.location.href='/profile'">🧑‍🍳</button>
+            <button class="plain-btn" onclick="window.location.href='/create-recipe'">⊕</button>
             <button class="plain-btn" id="enableNotificationsBtn" onclick="enableNotifications()" style="display: none;">
                 🔔
             </button>
@@ -49,7 +50,10 @@
         <ul class="feed-list" id="feedList">
             <!-- Feed items will go here -->
         </ul>
-        <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une nouvelle recette</button>
+        <div class="bottom-buttons">
+            <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une nouvelle recette</button>
+            <button class="plain-btn" onclick="window.location.href='/camera'">📷 Plus</button>
+        </div>
     </div>
     <script>
         // --- Helper: Parse hash params from URL (for Supabase login redirect) ---

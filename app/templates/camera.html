@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera - sauce</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_camera.css') }}">
+</head>
+<body>
+    <div class="camera-container">
+        <!-- Bouton retour -->
+        <button class="back-button" onclick="goBack()">←</button>
+        
+        <!-- Loading spinner -->
+        <div class="camera-loading" id="loadingSpinner">
+            <div class="spinner"></div>
+            Chargement de la caméra...
+        </div>
+        
+        <!-- Message d'erreur -->
+        <div class="camera-error" id="errorMessage" style="display: none;">
+            <div>❌ Impossible d'accéder à la caméra</div>
+            <div>Vérifiez les permissions de votre navigateur</div>
+            <button onclick="retryCamera()">Réessayer</button>
+        </div>
+        
+        <!-- Flux vidéo -->
+        <video id="cameraStream" autoplay playsinline style="display: none;"></video>
+        
+        <!-- Contrôles caméra -->
+        <div class="camera-controls" id="cameraControls" style="display: none;">
+            <button id="captureButton">📸</button>
+        </div>
+        
+        <!-- Canvas caché pour la capture -->
+        <canvas id="photoCanvas" style="display: none;"></canvas>
+    </div>
+    
+    <!-- Modal de prévisualisation photo -->
+    <div class="photo-preview" id="photoPreview">
+        <img id="capturedPhoto" src="" alt="Photo capturée">
+        <div class="photo-actions">
+            <button class="save-photo" onclick="savePhoto()">💾 Sauvegarder</button>
+            <button class="retake-photo" onclick="retakePhoto()">🔄 Reprendre</button>
+            <button class="cancel-photo" onclick="cancelPhoto()">❌ Annuler</button>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('cameraStream');
+        const canvas = document.getElementById('photoCanvas');
+        const captureButton = document.getElementById('captureButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorMessage = document.getElementById('errorMessage');
+        const cameraControls = document.getElementById('cameraControls');
+        const photoPreview = document.getElementById('photoPreview');
+        const capturedPhoto = document.getElementById('capturedPhoto');
+        
+        let currentStream = null;
+        let lastCapturedPhoto = null;
+
+        // Retourner à la page précédente
+        function goBack() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            window.history.back();
+        }
+
+        // Démarrer la caméra
+        async function startCamera() {
+            try {
+                loadingSpinner.style.display = 'block';
+                errorMessage.style.display = 'none';
+                
+                // Contraintes pour la caméra
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Caméra arrière par défaut
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+                
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+                
+                // Attendre que la vidéo soit prête
+                video.onloadedmetadata = () => {
+                    loadingSpinner.style.display = 'none';
+                    video.style.display = 'block';
+                    cameraControls.style.display = 'flex';
+                };
+                
+            } catch (error) {
+                console.error('Erreur d\'accès à la caméra:', error);
+                loadingSpinner.style.display = 'none';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        // Réessayer l'accès à la caméra
+        function retryCamera() {
+            startCamera();
+        }
+
+        // Capturer une photo
+        function capturePhoto() {
+            if (!video.videoWidth || !video.videoHeight) {
+                alert('La caméra n\'est pas encore prête. Veuillez patienter.');
+                return;
+            }
+            
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            lastCapturedPhoto = canvas.toDataURL('image/jpeg', 0.9);
+            capturedPhoto.src = lastCapturedPhoto;
+            photoPreview.style.display = 'flex';
+        }
+
+        // Reprendre une photo
+        function retakePhoto() {
+            photoPreview.style.display = 'none';
+            lastCapturedPhoto = null;
+        }
+
+        // Annuler la photo
+        function cancelPhoto() {
+            photoPreview.style.display = 'none';
+            lastCapturedPhoto = null;
+        }
+
+        // Sauvegarder la photo
+        function savePhoto() {
+            if (lastCapturedPhoto) {
+                // Créer un lien de téléchargement
+                const link = document.createElement('a');
+                link.download = `sauce-photo-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.jpg`;
+                link.href = lastCapturedPhoto;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Fermer la prévisualisation
+                cancelPhoto();
+                
+                // Optionnel: rediriger vers le feed après sauvegarde
+                setTimeout(() => {
+                    window.location.href = '/feed';
+                }, 500);
+            }
+        }
+
+        // Event listeners
+        captureButton.addEventListener('click', capturePhoto);
+
+        // Gestion des touches du clavier
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' || event.code === 'Enter') {
+                event.preventDefault();
+                if (photoPreview.style.display === 'none' || !photoPreview.style.display) {
+                    capturePhoto();
+                }
+            } else if (event.code === 'Escape') {
+                if (photoPreview.style.display === 'flex') {
+                    cancelPhoto();
+                } else {
+                    goBack();
+                }
+            }
+        });
+
+        // Nettoyer les ressources avant de quitter la page
+        window.addEventListener('beforeunload', () => {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Démarrer la caméra au chargement de la page
+        window.addEventListener('load', startCamera);
+        
+        // Gestion de l'orientation sur mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (video.videoWidth && video.videoHeight) {
+                    // Réajuster si nécessaire
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

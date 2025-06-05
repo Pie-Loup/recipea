@@ -161,5 +161,13 @@ def profile():
         return redirect(url_for('username_setup'))
     return render_template('profile.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
 
+@app.route('/camera')
+@login_required
+def camera():
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('camera.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)

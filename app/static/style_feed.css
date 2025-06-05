@@ -3,9 +3,9 @@
 
 /* Styles spécifiques au feed */
 .feed-container { 
-    max-width: 800px; 
+    max-width: 600px; 
     margin: 40px auto;
-    padding: 0 10px;
+    padding: 0 16px;
 }
 
 /* PWA prompt styles - hérités de style.css */
@@ -54,6 +54,7 @@
     height: 250px;
     object-fit: cover;
     border-bottom: 1px solid #eee;
+    display: block;
 }
 
 .feed-item-content {
@@ -118,7 +119,9 @@
 /* Styles pour mobile */
 @media (max-width: 768px) {
     .feed-container {
-        margin: 20px;
+        max-width: 100%;
+        margin: 20px auto;
+        padding: 0 12px;
     }
     
     .feed-item-actions {
@@ -129,4 +132,56 @@
         flex: 1;
         justify-content: center;
     }
+}
+
+/* Styles spécifiques pour les très petits écrans (iPhone 12 mini et similaires) */
+@media (max-width: 400px) {
+    .feed-container {
+        padding: 0 8px;
+        margin: 16px auto;
+    }
+    
+    .feed-item {
+        margin-bottom: 20px;
+    }
+    
+    .feed-item-image {
+        height: 200px;
+    }
+    
+    .feed-item-content {
+        padding: 12px;
+    }
+}
+
+/* Bottom buttons container */
+.bottom-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    margin-top: 20px;
+}
+
+.bottom-buttons .plain-btn {
+    flex: 1;
+    max-width: 200px;
+}
+
+.camera-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.camera-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }

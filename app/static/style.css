@@ -59,6 +59,63 @@
     font-family: 'Fredoka', Arial, sans-serif;
 }
 
+/* Définir la couleur du thème globalement pour toutes les pages */
+:root {
+    color-scheme: light;
+    --theme-color: #ffffff;
+}
+
+/* Appliquer la theme-color via CSS et forcer l'arrière-plan blanc */
+html, body {
+    background-color: #ffffff;
+}
+
+/* Désactiver le zoom sur mobile */
+* {
+    touch-action: manipulation;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+/* Masquer les barres de défilement */
+/* Pour WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+/* Pour Firefox */
+html {
+    scrollbar-width: none;
+}
+
+/* Pour tous les navigateurs - masquer le scrollbar mais conserver la fonctionnalité de scroll */
+body, html {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+body::-webkit-scrollbar, html::-webkit-scrollbar {
+    display: none;  /* Safari et Chrome */
+}
+
+/* Masquer les scrollbars pour tous les éléments scrollables */
+* {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+*::-webkit-scrollbar {
+    display: none;  /* Safari et Chrome */
+}
+
 /* Style de base */
 body {
     background: var(--background-color);
