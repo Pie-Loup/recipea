@@ -159,7 +159,10 @@ def profile():
     token = request.cookies.get("sb-access-token")
     if not check_user_has_username(token):
         return redirect(url_for('username_setup'))
-    return render_template('profile.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+    return render_template('profile.html', 
+                         supabase_anon_key=supabase_anon_key, 
+                         supabase_url=supabase_url,
+                         vapid_public_key=VAPID_PUBLIC_KEY)
 
 @app.route('/camera')
 @login_required

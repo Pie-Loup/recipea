@@ -24,6 +24,7 @@
 
     <!-- Charge les scripts spécifiques -->
     <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-header.js') }}"></script>
     <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
 </head>
@@ -33,26 +34,47 @@
         <button onclick="installPWA()">Installer</button>
         <button onclick="document.getElementById('pwaPrompt').style.display = 'none'">Plus tard</button>
     </div>
-    <div class="feed-container">
-        <div class="nav-container">
-            <button class="plain-btn" onclick="window.location.href='/profile'">🧑‍🍳</button>
-            <button class="plain-btn" onclick="window.location.href='/create-recipe'">⊕</button>
-            <button class="plain-btn" id="enableNotificationsBtn" onclick="enableNotifications()" style="display: none;">
-                🔔
+    
+    <!-- Header Navigation -->
+    <div class="app-header">
+        <div class="header-nav">
+            <button class="header-item disabled">
+                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
             </button>
-            <button class="plain-btn" id="notificationsStatus" onclick="disableNotifications()" style="display: none; background-color: #4CAF50; color: white;" title="Cliquez pour désactiver les notifications">
-                ✓
-            </button>
-            <button class="plain-btn" id="testNotificationBtn" onclick="testNotification()" style="display: none; background-color: #2196F3; color: white;">
-                🧪
+            <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
+                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
             </button>
         </div>
+    </div>
+    
+    <div class="feed-container">
         <ul class="feed-list" id="feedList">
             <!-- Feed items will go here -->
         </ul>
-        <div class="bottom-buttons">
-            <button class="plain-btn" onclick="window.location.href='/create-recipe'">Créer une nouvelle recette</button>
-            <button class="plain-btn" onclick="window.location.href='/camera'">📷 Plus</button>
+    </div>
+    
+    <!-- Footer Navigation -->
+    <div class="app-footer">
+        <div class="footer-nav">
+            <div class="footer-item active" onclick="navigateToPage('/feed')">
+                <img src="{{ url_for('static', filename='footer/friends_full_red.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <span class="footer-label">amis</span>
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <span class="footer-label">tendances</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/camera')">
+                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <span class="footer-label">coach</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/profile')">
+                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <span class="footer-label">profil</span>
+            </div>
         </div>
     </div>
     <script>
@@ -180,235 +202,15 @@
         // Initial fetch
         fetchRecipes();
 
-        // --- Notifications management ---
-        async function enableNotifications() {
-            try {
-                const enableBtn = document.getElementById('enableNotificationsBtn');
-                const statusBtn = document.getElementById('notificationsStatus');
-                
-                enableBtn.textContent = '⏳';
-                enableBtn.disabled = true;
-                
-                // Specific handling for iOS PWA
-                const isIOSPWA = window.navigator.standalone === true;
-                
-                console.log('Browser detection:', {
-                    isIOSPWA,
-                    userAgent: navigator.userAgent,
-                    standalone: window.navigator.standalone
-                });
-                
-                if (isIOSPWA) {
-                    console.log('Detected iOS PWA - applying special handling');
-                    // For iOS PWA, wait a bit longer before requesting permission
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-                
-                const result = await initializePushNotifications();
-                
-                if (result) {
-                    enableBtn.style.display = 'none';
-                    statusBtn.style.display = 'inline-block';
-                    document.getElementById('testNotificationBtn').style.display = 'inline-block';
-                    
-                    console.log('Notifications enabled successfully');
-                } else {
-                    enableBtn.textContent = '❌';
-                    enableBtn.disabled = false;
-                    console.log('Failed to enable notifications');
-                }
-            } catch (error) {
-                console.error('Error enabling notifications:', error);
-                const enableBtn = document.getElementById('enableNotificationsBtn');
-                enableBtn.textContent = '❌';
-                enableBtn.title = error.message || 'Failed to enable notifications';
-                enableBtn.disabled = false;
-                console.log('Failed to enable notifications:', error.message);
-            }
-        }
-
-        // Test notification function
-        async function testNotification() {
-            try {
-                const testBtn = document.getElementById('testNotificationBtn');
-                const originalText = testBtn.textContent;
-                testBtn.textContent = '⏳ Envoi...';
-                testBtn.disabled = true;
-                
-                // Données de notification de test
-                const testNotificationData = {
-                    "title": "🧪 Test Notification",
-                    "body": "Ceci est un test de notification push. Si vous voyez ceci, ça fonctionne !",
-                    "icon": "/static/icon.png",
-                    "badge": "/static/badge.png",
-                    "data": {
-                        "type": "test",
-                        "url": "/feed"
-                    }
-                };
-                
-                const response = await fetch('/api/send-notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        notification_data: testNotificationData
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    testBtn.textContent = '✓ Envoyé';
-                    testBtn.style.backgroundColor = '#4CAF50';
-                    alert(`✅ ${result.message}`);
-                    
-                    // Reset button after 3 seconds
-                    setTimeout(() => {
-                        testBtn.textContent = originalText;
-                        testBtn.style.backgroundColor = '#2196F3';
-                        testBtn.disabled = false;
-                    }, 3000);
-                } else {
-                    throw new Error(result.error || 'Failed to send test notification');
-                }
-            } catch (error) {
-                console.error('Error sending test notification:', error);
-                const testBtn = document.getElementById('testNotificationBtn');
-                testBtn.textContent = '❌ Erreur';
-                testBtn.style.backgroundColor = '#f44336';
-                alert(`❌ Erreur: ${error.message}`);
-                
-                // Reset button after 3 seconds
-                setTimeout(() => {
-                    testBtn.textContent = '🧪 Test';
-                    testBtn.style.backgroundColor = '#2196F3';
-                    testBtn.disabled = false;
-                }, 3000);
-            }
-        }
-
-        // Disable notifications function
-        async function disableNotifications() {
-            try {
-                const statusBtn = document.getElementById('notificationsStatus');
-                const enableBtn = document.getElementById('enableNotificationsBtn');
-                const testBtn = document.getElementById('testNotificationBtn');
-                
-                // Confirm with user
-                if (!confirm('Êtes-vous sûr de vouloir désactiver les notifications push ?')) {
-                    return;
-                }
-                
-                statusBtn.textContent = '⏳';
-                statusBtn.disabled = true;
-                
-                // Get current subscription
-                const registration = await navigator.serviceWorker.getRegistration('/static/sw.js');
-                if (registration) {
-                    const subscription = await registration.pushManager.getSubscription();
-                    if (subscription) {
-                        // Unsubscribe from the service worker
-                        await subscription.unsubscribe();
-                        
-                        // Remove from backend database
-                        const response = await fetch('/api/unsubscribe', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({
-                                endpoint: subscription.endpoint
-                            })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (response.ok) {
-                            // Update UI
-                            statusBtn.style.display = 'none';
-                            testBtn.style.display = 'none';
-                            enableBtn.style.display = 'inline-block';
-                            enableBtn.textContent = '🔔';
-                            enableBtn.disabled = false;
-                            
-                            alert('✅ Notifications désactivées avec succès !');
-                            console.log('Notifications disabled successfully');
-                        } else {
-                            throw new Error(result.error || 'Failed to unsubscribe from backend');
-                        }
-                    } else {
-                        throw new Error('No active subscription found');
-                    }
-                } else {
-                    throw new Error('Service worker not registered');
-                }
-            } catch (error) {
-                console.error('Error disabling notifications:', error);
-                const statusBtn = document.getElementById('notificationsStatus');
-                statusBtn.textContent = '❌';
-                statusBtn.disabled = false;
-                alert(`❌ Erreur lors de la désactivation: ${error.message}`);
-                
-                // Reset button after 3 seconds
-                setTimeout(() => {
-                    statusBtn.textContent = '✓';
-                    statusBtn.disabled = false;
-                }, 3000);
-            }
-        }
-
-        // Check notification status on page load
-        window.addEventListener('load', async () => {
-            const enableBtn = document.getElementById('enableNotificationsBtn');
-            const statusBtn = document.getElementById('notificationsStatus');
-            const testBtn = document.getElementById('testNotificationBtn');
-            
-            // Check if notifications are supported
-            if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-                console.log('Notifications not supported on this platform');
-                return;
-            }
-            
-            // Special check for iOS PWA
-            const isIOSPWA = window.navigator.standalone === true;
-            if (isIOSPWA) {
-                console.log('iOS PWA detected - checking notification capabilities');
-                // On iOS PWA, notifications might have different behavior
-                if (Notification.permission === 'denied') {
-                    console.log('iOS PWA: Notifications denied');
-                    return;
-                }
-            }
-            
-            // Check notification permission
-            if (Notification.permission === 'granted') {
-                // Check if we have an active subscription
-                try {
-                    const registration = await navigator.serviceWorker.getRegistration('/static/sw.js');
-                    if (registration) {
-                        const subscription = await registration.pushManager.getSubscription();
-                        if (subscription) {
-                            enableBtn.style.display = 'none';
-                            statusBtn.style.display = 'inline-block';
-                            testBtn.style.display = 'inline-block';
-                            
-                            console.log('Existing notification subscription found');
-                            return;
-                        }
-                    }
-                } catch (error) {
-                    console.log('Error checking subscription:', error);
-                }
-            }
-            
-            // Show enable button if notifications are not set up
-            console.log('Showing notification enable button');
-            enableBtn.style.display = 'inline-block';
+        // Initialize notification header after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initNotificationHeader();
         });
+
+        // Footer navigation function
+        function navigateToPage(url) {
+            window.location.href = url;
+        }
     </script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>

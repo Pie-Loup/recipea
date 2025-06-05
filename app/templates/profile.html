@@ -6,18 +6,35 @@
     <title>sauce</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_profile.css') }}">
+    
+    <!-- Configure les variables globales pour les notifications -->
+    <script>
+        window.VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+        window.SUPABASE_URL = "{{ supabase_url }}";
+        window.SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+    </script>
+    
     <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-header.js') }}"></script>
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <div class="profile-container">
-        <div class="nav-container">
-            <button class="btn back-btn" onclick="window.location.href='/feed'">Retour</button>
-            <button class="btn" onclick="window.location.href='/create-recipe'">Créer une recette</button>
+    
+    <!-- Header Navigation -->
+    <div class="app-header">
+        <div class="header-nav">
+            <button class="header-item disabled">
+                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
+            </button>
+            <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
+                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+            </button>
         </div>
-        
-        <h1>Mon Profil</h1>
+    </div>
+    
+    <div class="profile-container">
         <div id="userInfo"></div>
 
         <div class="search-container">
@@ -35,8 +52,45 @@
             <h2>Suivi par</h2>
             <div id="followersList"></div>
         </div>
+        
+        <!-- Notification Test Section -->
+        <div class="notification-test" style="margin-top: 20px; padding: 16px; background: var(--pure-white); border-radius: 12px; box-shadow: 0 2px 8px var(--shadow-color);">
+            <h3>Test des notifications</h3>
+            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px;">
+                Testez si les notifications push fonctionnent correctement sur votre appareil.
+            </p>
+            <button class="plain-btn" id="testNotificationBtn" onclick="testNotification()" style="background-color: #2196F3; color: white;">
+                🧪 Tester les notifications
+            </button>
+        </div>
+        
         <button class="plain-btn" style="margin-top:12px" id="logoutBtn">Se déconnecter</button>
 
+    </div>
+    
+    <!-- Footer Navigation -->
+    <div class="app-footer">
+        <div class="footer-nav">
+            <div class="footer-item" onclick="navigateToPage('/feed')">
+                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <span class="footer-label">amis</span>
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <span class="footer-label">tendances</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/camera')">
+                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <span class="footer-label">coach</span>
+            </div>
+            <div class="footer-item active" onclick="navigateToPage('/profile')">
+                <img src="{{ url_for('static', filename='footer/profile_full_red.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <span class="footer-label">profil</span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -312,6 +366,9 @@
                 loadFollowing(),
                 loadFollowers()
             ]);
+            
+            // Initialize notification header after everything is loaded
+            initNotificationHeader();
         }
 
         init();
@@ -338,6 +395,11 @@
                 window.location.replace('/');
             }
         };
+        
+        // Footer navigation function
+        function navigateToPage(url) {
+            window.location.href = url;
+        }
     </script>
 </body>
 </html>
