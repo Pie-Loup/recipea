@@ -32,22 +32,11 @@
     <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/icon-180x180.png') }}">
     
-    <!-- Microsoft Windows -->
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-144x144.png') }}">
-    <meta name="msapplication-square70x70logo" content="{{ url_for('static', filename='icons/icon-70x70.png') }}">
-    <meta name="msapplication-square150x150logo" content="{{ url_for('static', filename='icons/icon-150x150.png') }}">
-    <meta name="msapplication-square310x310logo" content="{{ url_for('static', filename='icons/icon-310x310.png') }}">
-    
-    <!-- Splash screens pour iOS -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-startup-image" href="{{ url_for('static', filename='icons/icon-512x512.png') }}">
-    
+    <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
+    <script>iosPWASplash('static/logo.svg', '#E0322C');</script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='splash.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="{{ url_for('static', filename='js/splash.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
 </head>
