@@ -27,7 +27,7 @@
 /* Variables sémantiques */
 :root {
     /* Couleurs de l'interface */
-    --background-color: var(--gray-100);
+    --background-color: var(--pure-white);
     --text-color-dark: var(--dark-color);
     --text-color-light: var(--light-color);
     --text-muted: var(--gray-400);
@@ -62,7 +62,7 @@
 /* Définir la couleur du thème globalement pour toutes les pages */
 :root {
     color-scheme: light;
-    --theme-color: #ffffff;
+    --theme-color: var(--light-red);
 }
 
 /* Appliquer la theme-color via CSS et forcer l'arrière-plan blanc */

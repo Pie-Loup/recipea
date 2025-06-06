@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.svg') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="sauce">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_feed.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -163,7 +163,7 @@
                 const recipesHtml = recipes.map(recipe => `
                     <li class="feed-item">
                         <div class="feed-item-header">
-                            <img src="/static/favicon.png" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
+                            <img src="/static/logo.svg" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
                             <div>
                                 <p class="feed-item-user"><a href="/user/${recipe.profiles ? recipe.profiles.username : ''}" class="username-link">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</a></p>
                                 <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
