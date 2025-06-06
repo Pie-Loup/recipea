@@ -27,7 +27,7 @@
 /* Variables sémantiques */
 :root {
     /* Couleurs de l'interface */
-    --background-color: var(--pure-white);
+    --background-color: var(--gray-100);
     --text-color-dark: var(--dark-color);
     --text-color-light: var(--light-color);
     --text-muted: var(--gray-400);
