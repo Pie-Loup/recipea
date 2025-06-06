@@ -97,8 +97,7 @@ def check_routes():
             '/create-recipe',
             '/create-recipe/photo',
             '/create-recipe/text',
-            '/voice-recipe',
-            '/recipe_generator'
+            '/voice-recipe'
         ]
         
         found_routes = []

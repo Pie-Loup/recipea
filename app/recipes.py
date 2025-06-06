@@ -514,6 +514,37 @@ def get_feed_recipes():
         print(f"❌ Full traceback: {traceback.format_exc()}")
         return jsonify({'error': f'Error fetching recipes: {str(e)}'}), 500
 
+@recipes_bp.route('/api/recipe/<recipe_id>', methods=['GET'])
+def get_recipe_detail(recipe_id):
+    import traceback
+    # Apply login_required check manually
+    token = request.cookies.get("sb-access-token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not token or not verify_supabase_jwt(token):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Setup Supabase client with auth headers
+        supabase_anon_key, supabase_url, _ = get_supabase_config()
+        supabase_client = create_client(supabase_url, supabase_anon_key)
+        supabase_client.postgrest.auth(token)
+
+        # Fetch the specific recipe with author information
+        result = supabase_client.table('recipes') \
+            .select('*, profiles!user_id(username)') \
+            .eq('recipe_id', recipe_id) \
+            .single() \
+            .execute()
+        
+        if not result.data:
+            return jsonify({'error': 'Recipe not found'}), 404
+
+        return jsonify(result.data)
+
+    except Exception as e:
+        print(f"❌ Error in get_recipe_detail: {str(e)}")
+        print(f"❌ Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Error fetching recipe: {str(e)}'}), 500
+
 # Recipe creation page routes
 @recipes_bp.route('/create-recipe')
 def create_recipe():
@@ -558,14 +589,3 @@ def voice_recipe():
     
     supabase_anon_key, supabase_url, _ = get_supabase_config()
     return render_template('voice_recipe_generator.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
-
-# Redirect old route to new create-recipe page
-@recipes_bp.route('/recipe_generator')
-def recipe_generator():
-    # Apply login_required check manually
-    token = request.cookies.get("sb-access-token") or request.headers.get("Authorization", "").replace("Bearer ", "")
-    if not token or not verify_supabase_jwt(token):
-        from flask import redirect, url_for
-        return redirect(url_for('index'))
-    
-    return redirect(url_for('recipes.create_recipe'))

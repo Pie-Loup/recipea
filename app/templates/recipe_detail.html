@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>sauce</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="sauce">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_recipe.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configure les variables globales -->
+    <script>
+        window.VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+        window.SUPABASE_URL = "{{ supabase_url }}";
+        window.SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        window.client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+        window.RECIPE_ID = "{{ recipe_id }}";
+    </script>
+
+    <!-- Charge les scripts spécifiques -->
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-header.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
+</head>
+<body>
+    <div class="pwa-prompt" id="pwaPrompt">
+        📱 Installez sauce sur votre téléphone !
+        <button onclick="installPWA()">Installer</button>
+        <button onclick="document.getElementById('pwaPrompt').style.display = 'none'">Plus tard</button>
+    </div>
+    
+    <!-- Header Navigation -->
+    <div class="app-header">
+        <div class="header-nav">
+            <button class="header-item back-button" onclick="goBack()">
+                <span class="back-arrow">←</span>
+            </button>
+            <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
+                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+            </button>
+        </div>
+    </div>
+    
+    <div class="recipe-container" id="recipeContainer">
+        <!-- Loading spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            Chargement de la recette...
+        </div>
+        
+        <!-- Recipe content will be loaded here -->
+        <div class="recipe-content" id="recipeContent" style="display: none;">
+            <!-- Content will be dynamically populated -->
+        </div>
+        
+        <!-- Error message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <h3>🍽️ Erreur</h3>
+            <p>Impossible de charger cette recette.</p>
+            <button class="btn" onclick="goBack()">Retour au feed</button>
+        </div>
+    </div>
+    
+    <!-- Footer Navigation -->
+    <div class="app-footer">
+        <div class="footer-nav">
+            <div class="footer-item" onclick="navigateToPage('/feed')">
+                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <span class="footer-label">amis</span>
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <span class="footer-label">tendances</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/camera')">
+                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <span class="footer-label">coach</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/profile')">
+                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <span class="footer-label">profil</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Helper: Parse hash params from URL (for Supabase login redirect) ---
+        function parseHashParams() {
+            const hash = window.location.hash.substr(1);
+            return hash.split('&').reduce((res, item) => {
+                const parts = item.split('=');
+                if (parts[0] && parts[1]) res[parts[0]] = decodeURIComponent(parts[1]);
+                return res;
+            }, {});
+        }
+
+        // --- If access_token in hash, store in cookie and clean URL ---
+        (async function handleSupabaseLoginRedirect() {
+            const params = parseHashParams();
+            if (params.access_token) {
+                try {
+                    // Store token in cookie for Flask backend
+                    document.cookie = `sb-access-token=${params.access_token}; path=/; secure; samesite=strict; max-age=3600`;
+                    
+                    // Create session object
+                    const { access_token, refresh_token, expires_in } = params;
+                    const session = {
+                        access_token,
+                        refresh_token,
+                        expires_in: parseInt(expires_in),
+                        expires_at: Math.floor(Date.now() / 1000) + parseInt(expires_in),
+                        token_type: "bearer",
+                        user: null // Will be populated by Supabase
+                    };
+
+                    // Set the session in Supabase client
+                    await window.client.auth.setSession(session);
+                    
+                    // Clean the URL by removing the hash
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                } catch (error) {
+                    console.error('Error handling login redirect:', error);
+                }
+            }
+        })();
+
+        // Format date helper
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) return 'hier';
+            if (diffDays < 7) return `il y a ${diffDays} jours`;
+            
+            return date.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short'
+            });
+        }
+
+        // Fetch and display recipe details
+        async function fetchRecipeDetails() {
+            try {
+                const response = await fetch(`/api/recipe/${window.RECIPE_ID}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Recipe not found');
+                    }
+                    throw new Error('Failed to fetch recipe');
+                }
+                
+                const recipe = await response.json();
+                displayRecipe(recipe);
+                
+            } catch (error) {
+                console.error('Error fetching recipe:', error);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        // Display recipe content
+        function displayRecipe(recipe) {
+            const content = document.getElementById('recipeContent');
+            
+            // Update page title with recipe title
+            document.title = `${recipe.title} - sauce`;
+            
+            const otherElementsHtml = recipe.other_elements && recipe.other_elements.length > 0 
+                ? `
+                    <div class="recipe-section">
+                        <h3 class="section-title">🌟 Autres éléments</h3>
+                        <ul class="other-elements-list">
+                            ${recipe.other_elements.map(element => `<li>${element}</li>`).join('')}
+                        </ul>
+                    </div>
+                `
+                : '';
+
+            content.innerHTML = `
+                <div class="recipe-header">
+                    <div class="recipe-meta">
+                        <div class="author-info">
+                            <img src="/static/favicon.png" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" class="author-avatar" />
+                            <div>
+                                <p class="author-name">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</p>
+                                <p class="recipe-date">${formatDate(recipe.created_at)}</p>
+                            </div>
+                        </div>
+                        <div class="recipe-tags">
+                            <span class="tag tag-status">${recipe.state}</span>
+                            <span class="tag tag-origin">${recipe.origin}</span>
+                            <span class="tag tag-type">recette</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recipe-main">
+                    <h1 class="recipe-title">${recipe.title}</h1>
+                    <img class="recipe-image" src="/static/default/default_recipe.jpg" alt="${recipe.title}" />
+                    
+                    ${otherElementsHtml}
+                    
+                    <div class="recipe-section">
+                        <h3 class="section-title">🥄 Ingrédients</h3>
+                        <ul class="ingredients-list">
+                            ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="recipe-section">
+                        <h3 class="section-title">👨‍🍳 Étapes</h3>
+                        <ol class="steps-list">
+                            ${recipe.steps.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="recipe-actions">
+                    <button class="action-button primary">
+                        🌶️ Saucer
+                    </button>
+                    <button class="action-button secondary">
+                        🔁 Repost
+                    </button>
+                    <button class="action-button secondary">
+                        💬 Commenter
+                    </button>
+                    <button class="action-button secondary" onclick="shareRecipe()">
+                        📤 Partager
+                    </button>
+                </div>
+            `;
+            
+            // Hide loading and show content
+            document.getElementById('loadingSpinner').style.display = 'none';
+            content.style.display = 'block';
+        }
+
+        // Share recipe function
+        function shareRecipe() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Lien copié dans le presse-papiers !');
+                });
+            }
+        }
+
+        // Go back function
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/feed';
+            }
+        }
+
+        // Footer navigation function
+        function navigateToPage(url) {
+            window.location.href = url;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchRecipeDetails();
+            initNotificationHeader();
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

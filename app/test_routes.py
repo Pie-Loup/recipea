@@ -58,8 +58,7 @@ def check_routes_exist():
             '/create-recipe',
             '/create-recipe/photo',
             '/create-recipe/text',
-            '/voice-recipe',
-            '/recipe_generator'
+            '/voice-recipe'
         ]
         
         found_routes = [rule.rule for rule in recipes_bp.url_map.iter_rules()]

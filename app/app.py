@@ -147,12 +147,6 @@ def feed():
                          supabase_url=supabase_url,
                          vapid_public_key=VAPID_PUBLIC_KEY)
 
-@app.route('/recipe_generator')
-@login_required
-def recipe_generator():
-    # Redirect old route to new create-recipe page
-    return redirect(url_for('recipes.create_recipe'))
-
 @app.route('/profile')
 @login_required
 def profile():
@@ -171,6 +165,30 @@ def camera():
     if not check_user_has_username(token):
         return redirect(url_for('username_setup'))
     return render_template('camera.html', supabase_anon_key=supabase_anon_key, supabase_url=supabase_url)
+
+@app.route('/user/<username>')
+@login_required
+def user_profile(username):
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('user_profile.html', 
+                         username=username,
+                         supabase_anon_key=supabase_anon_key, 
+                         supabase_url=supabase_url,
+                         vapid_public_key=VAPID_PUBLIC_KEY)
+
+@app.route('/recipe/<recipe_id>')
+@login_required
+def recipe_detail(recipe_id):
+    token = request.cookies.get("sb-access-token")
+    if not check_user_has_username(token):
+        return redirect(url_for('username_setup'))
+    return render_template('recipe_detail.html', 
+                         recipe_id=recipe_id,
+                         supabase_anon_key=supabase_anon_key, 
+                         supabase_url=supabase_url,
+                         vapid_public_key=VAPID_PUBLIC_KEY)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True, threaded=True)

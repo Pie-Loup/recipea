@@ -28,9 +28,9 @@
         <!-- Flux vidéo -->
         <video id="cameraStream" autoplay playsinline style="display: none;"></video>
         
-        <!-- Contrôles caméra -->
-        <div class="camera-controls" id="cameraControls" style="display: none;">
-            <button id="captureButton">📸</button>
+        <!-- Contrôles caméra style="display: none;" -->
+        <div class="camera-controls" id="cameraControls">
+            <button id="captureButton"></button>
         </div>
         
         <!-- Canvas caché pour la capture -->
@@ -152,6 +152,48 @@
                 setTimeout(() => {
                     window.location.href = '/feed';
                 }, 500);
+            }
+        }
+
+        // Variables pour la gestion du swipe
+        let startX = 0;
+        let startY = 0;
+        let endX = 0;
+        let endY = 0;
+        const minSwipeDistance = 50; // Distance minimum pour déclencher un swipe
+        
+        // Détecter le début du touch
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+        
+        // Détecter la fin du touch et calculer le swipe
+        document.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            
+            handleSwipe();
+        });
+        
+        // Gérer le swipe
+        function handleSwipe() {
+            const diffX = startX - endX; // Distance horizontale
+            const diffY = Math.abs(startY - endY); // Distance verticale (en valeur absolue)
+            
+            // Vérifier si c'est un swipe horizontal (et non vertical)
+            if (Math.abs(diffX) > minSwipeDistance && diffY < Math.abs(diffX) / 2) {
+                // Swipe vers la droite (doigt vers la gauche) - diffX > 0
+                if (diffX > 0) {
+                    // Ne naviguer que si on n'est pas dans la modal de prévisualisation
+                    if (photoPreview.style.display !== 'flex') {
+                        // Arrêter la caméra avant de naviguer
+                        if (currentStream) {
+                            currentStream.getTracks().forEach(track => track.stop());
+                        }
+                        window.location.href = '/create-recipe'; // Rediriger vers la page de création de recette
+                    }
+                }
             }
         }
 

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>sauce</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_profile.css') }}">
+    
+    <!-- Configure les variables globales pour les notifications -->
+    <script>
+        window.VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+        window.SUPABASE_URL = "{{ supabase_url }}";
+        window.SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        window.TARGET_USERNAME = "{{ username }}";
+    </script>
+    
+    <script src="{{ url_for('static', filename='js/disable-zoom.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-color.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification-header.js') }}"></script>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Header Navigation -->
+    <div class="app-header">
+        <div class="header-nav">
+            <button class="header-item" onclick="goBack()" style="font-size: 1.2em; font-weight: bold;">
+                ←
+            </button>
+            <button class="header-item disabled">
+                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
+            </button>
+            <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
+                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+            </button>
+        </div>
+    </div>
+    
+    <div class="profile-container">
+        <div id="userInfo" class="user-info"></div>
+
+        <div class="following-list">
+            <h2>Suit les chefs</h2>
+            <div id="followingList"></div>
+        </div>
+
+        <div class="followers-list">
+            <h2>Suivi par les chefs</h2>
+            <div id="followersList"></div>
+        </div>
+
+    </div>
+    
+    <!-- Footer Navigation -->
+    <div class="app-footer">
+        <div class="footer-nav">
+            <div class="footer-item" onclick="navigateToPage('/feed')">
+                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <span class="footer-label">amis</span>
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <span class="footer-label">tendances</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/camera')">
+                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+            </div>
+            <div class="footer-item disabled">
+                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <span class="footer-label">coach</span>
+            </div>
+            <div class="footer-item" onclick="navigateToPage('/profile')">
+                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <span class="footer-label">profil</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "{{ supabase_url }}";
+        const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const targetUsername = "{{ username }}";
+        let currentUser = null;
+        let targetUser = null;
+        let isFollowing = false;
+
+        // Initialize the page
+        async function init() {
+            try {
+                // Check authentication
+                const { data: { session } } = await client.auth.getSession();
+                if (!session) {
+                    window.location.href = '/';
+                    return;
+                }
+                currentUser = session.user;
+
+                // Load target user profile first
+                await loadUserProfile();
+                
+                // Only load following/followers if target user was found successfully
+                if (targetUser) {
+                    await loadFollowingList();
+                    await loadFollowersList();
+                }
+            } catch (error) {
+                console.error('Error initializing page:', error);
+            }
+        }
+
+        // Load the target user's profile
+        async function loadUserProfile() {
+            try {
+                const { data: users, error } = await client
+                    .from('profiles')
+                    .select('id, username')
+                    .eq('username', targetUsername)
+                    .single();
+
+                if (error || !users) {
+                    console.error('Error loading user profile:', error);
+                    document.getElementById('userInfo').innerHTML = '<p class="error-message">Utilisateur non trouvé</p>';
+                    return;
+                }
+
+                targetUser = users;
+
+                // Check if current user is following this user
+                const { data: followData, error: followError } = await client
+                    .from('follows')
+                    .select('*')
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', targetUser.id)
+                    .maybeSingle();
+
+                // maybeSingle() returns null if no rows found, instead of throwing an error
+                isFollowing = !!followData;
+
+                // Display user profile
+                document.getElementById('userInfo').innerHTML = `
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <img src="/static/favicon.png" alt="${targetUser.username}" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 16px;">
+                        <h1>@${targetUser.username}</h1>
+                        ${currentUser.id !== targetUser.id ? `
+                            <button 
+                                onclick="toggleFollow()"
+                                class="follow-btn ${isFollowing ? 'unfollow-btn' : ''}"
+                                id="followBtn"
+                                style="padding: 12px 24px; font-size: 1em; margin-top: 8px;"
+                            >
+                                ${isFollowing ? 'Ne plus suivre' : 'Suivre'}
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                document.getElementById('userInfo').innerHTML = '<p class="error-message">Erreur lors du chargement du profil</p>';
+            }
+        }
+
+        // Load users that this user is following
+        async function loadFollowingList() {
+            try {
+                if (!targetUser) {
+                    console.log('Target user not loaded yet');
+                    return;
+                }
+
+                const { data: following, error } = await client
+                    .from('follows')
+                    .select(`
+                        following:profiles!follows_following_id_fkey(
+                            id,
+                            username
+                        )
+                    `)
+                    .eq('follower_id', targetUser.id);
+
+                if (error) {
+                    console.error('Error loading following:', error);
+                    return;
+                }
+
+                const followingDiv = document.getElementById('followingList');
+                if (!following.length) {
+                    followingDiv.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Ne suit personne pour le moment</p>';
+                    return;
+                }
+
+                followingDiv.innerHTML = following.map(follow => `
+                    <div class="following-item">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="/static/favicon.png" alt="${follow.following.username}" style="width: 40px; height: 40px; border-radius: 50%;">
+                            <div>
+                                <div style="font-weight: 500;">
+                                    <a href="/user/${follow.following.username}" style="text-decoration: none; color: inherit;">
+                                        @${follow.following.username}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading following list:', error);
+            }
+        }
+
+        // Load users that follow this user
+        async function loadFollowersList() {
+            try {
+                if (!targetUser) {
+                    console.log('Target user not loaded yet');
+                    return;
+                }
+
+                const { data: followers, error } = await client
+                    .from('follows')
+                    .select(`
+                        follower:profiles!follows_follower_id_fkey(
+                            id,
+                            username
+                        )
+                    `)
+                    .eq('following_id', targetUser.id);
+
+                if (error) {
+                    console.error('Error loading followers:', error);
+                    return;
+                }
+
+                const followersDiv = document.getElementById('followersList');
+                if (!followers.length) {
+                    followersDiv.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Aucun abonné pour le moment</p>';
+                    return;
+                }
+
+                followersDiv.innerHTML = followers.map(follow => `
+                    <div class="following-item">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="/static/favicon.png" alt="${follow.follower.username}" style="width: 40px; height: 40px; border-radius: 50%;">
+                            <div>
+                                <div style="font-weight: 500;">
+                                    <a href="/user/${follow.follower.username}" style="text-decoration: none; color: inherit;">
+                                        @${follow.follower.username}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading followers list:', error);
+            }
+        }
+
+        // Toggle follow/unfollow
+        async function toggleFollow() {
+            try {
+                const followBtn = document.getElementById('followBtn');
+                followBtn.disabled = true;
+
+                if (isFollowing) {
+                    // Unfollow
+                    const { error } = await client
+                        .from('follows')
+                        .delete()
+                        .eq('follower_id', currentUser.id)
+                        .eq('following_id', targetUser.id);
+
+                    if (error) {
+                        console.error('Error unfollowing:', error);
+                        return;
+                    }
+
+                    isFollowing = false;
+                    followBtn.textContent = 'Suivre';
+                    followBtn.classList.remove('unfollow-btn');
+                } else {
+                    // Follow
+                    const { error } = await client
+                        .from('follows')
+                        .insert({
+                            follower_id: currentUser.id,
+                            following_id: targetUser.id
+                        });
+
+                    if (error) {
+                        console.error('Error following:', error);
+                        return;
+                    }
+
+                    isFollowing = true;
+                    followBtn.textContent = 'Ne plus suivre';
+                    followBtn.classList.add('unfollow-btn');
+                }
+
+                // Reload followers list to reflect the change
+                await loadFollowersList();
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+            } finally {
+                document.getElementById('followBtn').disabled = false;
+            }
+        }
+
+        // Navigation functions
+        function navigateToPage(url) {
+            window.location.href = url;
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Initialize notification header after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initNotificationHeader();
+            init();
+        });
+    </script>
+</body>
+</html>

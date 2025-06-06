@@ -43,6 +43,17 @@
     margin: 0;
 }
 
+.username-link {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+}
+
+.username-link:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
 .feed-item-date {
     color: var(--text-color-dark);
     font-size: 0.9em;

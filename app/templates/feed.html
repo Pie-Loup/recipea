@@ -165,11 +165,11 @@
                         <div class="feed-item-header">
                             <img src="/static/favicon.png" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
                             <div>
-                                <p class="feed-item-user">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</p>
+                                <p class="feed-item-user"><a href="/user/${recipe.profiles ? recipe.profiles.username : ''}" class="username-link">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</a></p>
                                 <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
                             </div>
                         </div>
-                        <img class="feed-item-image" src="/static/default/default_recipe.jpg" alt="${recipe.title}" />
+                        <img class="feed-item-image" src="/static/default/default_recipe.jpg" alt="${recipe.title.replace(/"/g, '&quot;')}" onclick="openRecipe('${recipe.recipe_id}')" style="cursor: pointer;" />
                         <div class="feed-item-content">
                             <h2 class="feed-item-title">${recipe.title}</h2>
                             <div class="feed-item-tags">
@@ -210,6 +210,11 @@
         // Footer navigation function
         function navigateToPage(url) {
             window.location.href = url;
+        }
+
+        // Open recipe detail page
+        function openRecipe(recipeId) {
+            window.location.href = `/recipe/${recipeId}`;
         }
     </script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>

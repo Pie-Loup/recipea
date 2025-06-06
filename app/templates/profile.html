@@ -249,7 +249,7 @@
                     .from('follows')
                     .select(`
                         following_id,
-                        following:profiles!follows_v2_following_id_fkey (
+                        following:profiles!follows_following_id_fkey (
                             id,
                             username
                         )
@@ -303,7 +303,7 @@
                     .from('follows')
                     .select(`
                         follower_id,
-                        follower:profiles!follows_v2_follower_id_fkey (
+                        follower:profiles!follows_follower_id_fkey (
                             id,
                             username
                         )
