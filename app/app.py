@@ -5,8 +5,8 @@ from google import genai
 import jwt
 import httpx
 from dotenv import load_dotenv
-from notifications import notifications_bp
-from recipes import recipes_bp, init_recipes_blueprint
+from modules.notifications import notifications_bp
+from modules.recipes import recipes_bp, init_recipes_blueprint
 import time
 
 load_dotenv()

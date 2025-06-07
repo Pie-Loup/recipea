@@ -7,7 +7,7 @@ function updateNotificationHeaderIcon() {
     
     // Check notification permission and subscription status
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        headerIcon.src = headerIcon.src.replace('notification_full.png', 'notification.png');
+        headerIcon.src = headerIcon.src.replace('img/header/notification_full.png', 'img/header/notification.png');
         return;
     }
     
@@ -18,22 +18,22 @@ function updateNotificationHeaderIcon() {
                 registration.pushManager.getSubscription().then(subscription => {
                     if (subscription) {
                         // Notifications are enabled
-                        headerIcon.src = headerIcon.src.includes('notification_full.png') ? 
+                        headerIcon.src = headerIcon.src.includes('img/header/notification_full.png') ? 
                             headerIcon.src : 
-                            headerIcon.src.replace('notification.png', 'notification_full.png');
+                            headerIcon.src.replace('img/header/notification.png', 'img/header/notification_full.png');
                     } else {
                         // No subscription
-                        headerIcon.src = headerIcon.src.replace('notification_full.png', 'notification.png');
+                        headerIcon.src = headerIcon.src.replace('img/header/notification_full.png', 'img/header/notification.png');
                     }
                 });
             } else {
                 // No service worker
-                headerIcon.src = headerIcon.src.replace('notification_full.png', 'notification.png');
+                headerIcon.src = headerIcon.src.replace('img/header/notification_full.png', 'img/header/notification.png');
             }
         });
     } else {
         // Permission not granted
-        headerIcon.src = headerIcon.src.replace('notification_full.png', 'notification.png');
+        headerIcon.src = headerIcon.src.replace('img/header/notification_full.png', 'img/header/notification.png');
     }
 }
 
@@ -142,8 +142,8 @@ async function testNotification() {
         const testNotificationData = {
             "title": "🧪 Test Notification",
             "body": "Ceci est un test de notification push. Si vous voyez ceci, ça fonctionne !",
-            "icon": "/static/icon.png",
-            "badge": "/static/badge.png",
+            "icon": "/static/img/icon.png",
+            "badge": "/static/img/badge.png",
             "data": {
                 "type": "test",
                 "url": window.location.pathname

@@ -52,8 +52,8 @@ Send a custom notification to the authenticated user.
   "notification_data": {
     "title": "Notification Title",
     "body": "Notification message",
-    "icon": "/static/icon.png",
-    "badge": "/static/badge.png",
+    "icon": "/static/img/icon.png",
+    "badge": "/static/img/badge.png",
     "data": {
       "type": "custom",
       "url": "/target-page"

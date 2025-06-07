@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.svg') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="sauce">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_recipe.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -43,7 +43,7 @@
                 <span class="back-arrow">←</span>
             </button>
             <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
-                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+                <img src="{{ url_for('static', filename='img/header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
             </button>
         </div>
     </div>
@@ -72,22 +72,22 @@
     <div class="app-footer">
         <div class="footer-nav">
             <div class="footer-item" onclick="navigateToPage('/feed')">
-                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <img src="{{ url_for('static', filename='img/footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
                 <span class="footer-label">amis</span>
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/trends.png') }}" alt="Tendances" class="footer-icon">
                 <span class="footer-label">tendances</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/camera')">
-                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/cloche.png') }}" alt="Caméra" class="footer-icon">
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/coach.png') }}" alt="Coach" class="footer-icon">
                 <span class="footer-label">coach</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/profile')">
-                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <img src="{{ url_for('static', filename='img/footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
                 <span class="footer-label">profil</span>
             </div>
         </div>
@@ -194,7 +194,7 @@
                 <div class="recipe-header">
                     <div class="recipe-meta">
                         <div class="author-info">
-                            <img src="/static/logo.svg" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" class="author-avatar" />
+                            <img src="/static/img/logo.svg" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" class="author-avatar" />
                             <div>
                                 <p class="author-name">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</p>
                                 <p class="recipe-date">${formatDate(recipe.created_at)}</p>
@@ -210,7 +210,7 @@
 
                 <div class="recipe-main">
                     <h1 class="recipe-title">${recipe.title}</h1>
-                    <img class="recipe-image" src="/static/default/default_recipe.jpg" alt="${recipe.title}" />
+                    <img class="recipe-image" src="/static/img/default/default_recipe.jpg" alt="${recipe.title}" />
                     
                     ${otherElementsHtml}
                     
