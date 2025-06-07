@@ -62,7 +62,7 @@
 /* Définir la couleur du thème globalement pour toutes les pages */
 :root {
     color-scheme: light;
-    --theme-color: #ffffff;
+    --theme-color: var(--light-red);
 }
 
 /* Appliquer la theme-color via CSS et forcer l'arrière-plan blanc */

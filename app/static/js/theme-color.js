@@ -1,4 +1,4 @@
-// theme-color.js - Applique automatiquement la theme-color blanche sur toutes les pages
+// theme-color.js - Applique automatiquement la theme-color sauce sur toutes les pages
 
 (function() {
     // Fonction pour appliquer la theme-color
