@@ -4,31 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-16x16.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/icons/icon-16x16.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
     <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
-    <script>iosPWASplash('static/logo.svg', '#E0322C');</script>
+    <script>iosPWASplash('static/img/logo.svg', '#E0322C');</script>
     
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link rel="apple-touch-icon" sizes="57x57" href="{{ url_for('static', filename='icons/icon-57x57.png') }}">
-    <link rel="apple-touch-icon" sizes="60x60" href="{{ url_for('static', filename='icons/icon-60x60.png') }}">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{ url_for('static', filename='icons/icon-72x72.png') }}">
-    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='icons/icon-76x76.png') }}">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='icons/icon-114x114.png') }}">
-    <link rel="apple-touch-icon" sizes="120x120" href="{{ url_for('static', filename='icons/icon-120x120.png') }}">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{ url_for('static', filename='icons/icon-144x144.png') }}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/icon-152x152.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/icon-180x180.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" sizes="57x57" href="{{ url_for('static', filename='img/icons/icon-57x57.png') }}">
+    <link rel="apple-touch-icon" sizes="60x60" href="{{ url_for('static', filename='img/icons/icon-60x60.png') }}">
+    <link rel="apple-touch-icon" sizes="72x72" href="{{ url_for('static', filename='img/icons/icon-72x72.png') }}">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/icons/icon-76x76.png') }}">
+    <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='img/icons/icon-114x114.png') }}">
+    <link rel="apple-touch-icon" sizes="120x120" href="{{ url_for('static', filename='img/icons/icon-120x120.png') }}">
+    <link rel="apple-touch-icon" sizes="144x144" href="{{ url_for('static', filename='img/icons/icon-144x144.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='img/icons/icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/icons/icon-180x180.png') }}">
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="sauce">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_feed.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -57,10 +57,10 @@
     <div class="app-header">
         <div class="header-nav">
             <button class="header-item disabled">
-                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
+                <img src="{{ url_for('static', filename='img/header/search.png') }}" alt="Recherche" class="header-icon">
             </button>
             <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
-                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+                <img src="{{ url_for('static', filename='img/header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
             </button>
         </div>
     </div>
@@ -75,22 +75,22 @@
     <div class="app-footer">
         <div class="footer-nav">
             <div class="footer-item active" onclick="navigateToPage('/feed')">
-                <img src="{{ url_for('static', filename='footer/friends_full_red.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <img src="{{ url_for('static', filename='img/footer/friends_full_red.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
                 <span class="footer-label">amis</span>
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/trends.png') }}" alt="Tendances" class="footer-icon">
                 <span class="footer-label">tendances</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/camera')">
-                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/cloche.png') }}" alt="Caméra" class="footer-icon">
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/coach.png') }}" alt="Coach" class="footer-icon">
                 <span class="footer-label">coach</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/profile')">
-                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <img src="{{ url_for('static', filename='img/footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
                 <span class="footer-label">profil</span>
             </div>
         </div>
@@ -181,13 +181,13 @@
                 const recipesHtml = recipes.map(recipe => `
                     <li class="feed-item">
                         <div class="feed-item-header">
-                            <img src="/static/logo.svg" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
+                            <img src="/static/img/logo.svg" alt="${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}" />
                             <div>
                                 <p class="feed-item-user"><a href="/user/${recipe.profiles ? recipe.profiles.username : ''}" class="username-link">@${recipe.profiles ? recipe.profiles.username : 'Utilisateur inconnu'}</a></p>
                                 <p class="feed-item-date">${formatDate(recipe.created_at)}</p>
                             </div>
                         </div>
-                        <img class="feed-item-image" src="/static/default/default_recipe.jpg" alt="${recipe.title.replace(/"/g, '&quot;')}" onclick="openRecipe('${recipe.recipe_id}')" style="cursor: pointer;" />
+                        <img class="feed-item-image" src="/static/img/default/default_recipe.jpg" alt="${recipe.title.replace(/"/g, '&quot;')}" onclick="openRecipe('${recipe.recipe_id}')" style="cursor: pointer;" />
                         <div class="feed-item-content">
                             <h2 class="feed-item-title">${recipe.title}</h2>
                             <div class="feed-item-tags">

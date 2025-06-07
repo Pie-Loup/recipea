@@ -53,8 +53,8 @@ def test_notification_structure():
         "notification_data": {
             "title": "Un chef vous suit",
             "body": "@username_a vous suit sur sauce! Cliquez pour voir son profil et ses recettes 😋",
-            "icon": "/static/icon.png",
-            "badge": "/static/badge.png",
+            "icon": "/static/img/icon.png",
+            "badge": "/static/img/badge.png",
             "data": {
                 "type": "custom",
                 "url": "/feed"

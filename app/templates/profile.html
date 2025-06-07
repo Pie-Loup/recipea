@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_profile.css') }}">
     
     <!-- Configure les variables globales pour les notifications -->
@@ -26,10 +26,10 @@
     <div class="app-header">
         <div class="header-nav">
             <button class="header-item disabled">
-                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
+                <img src="{{ url_for('static', filename='img/header/search.png') }}" alt="Recherche" class="header-icon">
             </button>
             <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
-                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+                <img src="{{ url_for('static', filename='img/header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
             </button>
         </div>
     </div>
@@ -72,22 +72,22 @@
     <div class="app-footer">
         <div class="footer-nav">
             <div class="footer-item" onclick="navigateToPage('/feed')">
-                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <img src="{{ url_for('static', filename='img/footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
                 <span class="footer-label">amis</span>
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/trends.png') }}" alt="Tendances" class="footer-icon">
                 <span class="footer-label">tendances</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/camera')">
-                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/cloche.png') }}" alt="Caméra" class="footer-icon">
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/coach.png') }}" alt="Coach" class="footer-icon">
                 <span class="footer-label">coach</span>
             </div>
             <div class="footer-item active" onclick="navigateToPage('/profile')">
-                <img src="{{ url_for('static', filename='footer/profile_full_red.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <img src="{{ url_for('static', filename='img/footer/profile_full_red.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
                 <span class="footer-label">profil</span>
             </div>
         </div>

@@ -302,8 +302,8 @@ def send_follow_notification(follower_username, followed_user_id):
         notification_data = {
             "title": "Un chef vous suit",
             "body": f"@{follower_username} vous suit sur sauce! Cliquez pour voir son profil et ses recettes 😋",
-            "icon": "/static/icon.png",
-            "badge": "/static/badge.png",
+            "icon": "/static/img/icon.png",
+            "badge": "/static/img/badge.png",
             "data": {
                 "type": "custom",
                 "url": "/feed"

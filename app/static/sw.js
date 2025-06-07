@@ -4,7 +4,7 @@ const ASSETS_TO_CACHE = [
   '/feed',
   '/create-recipe',
   '/profile',
-  '/static/logo.svg',
+  '/static/img/logo.svg',
   '/static/manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>sauce</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.svg') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style_profile.css') }}">
     
     <!-- Configure les variables globales pour les notifications -->
@@ -30,10 +30,10 @@
                 ←
             </button>
             <button class="header-item disabled">
-                <img src="{{ url_for('static', filename='header/search.png') }}" alt="Recherche" class="header-icon">
+                <img src="{{ url_for('static', filename='img/header/search.png') }}" alt="Recherche" class="header-icon">
             </button>
             <button class="header-item" id="notificationHeaderBtn" onclick="toggleNotificationState()">
-                <img src="{{ url_for('static', filename='header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
+                <img src="{{ url_for('static', filename='img/header/notification.png') }}" alt="Notifications" class="header-icon" id="notification-header-icon">
             </button>
         </div>
     </div>
@@ -57,22 +57,22 @@
     <div class="app-footer">
         <div class="footer-nav">
             <div class="footer-item" onclick="navigateToPage('/feed')">
-                <img src="{{ url_for('static', filename='footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
+                <img src="{{ url_for('static', filename='img/footer/friends.png') }}" alt="Amis" class="footer-icon" id="friends-icon">
                 <span class="footer-label">amis</span>
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/trends.png') }}" alt="Tendances" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/trends.png') }}" alt="Tendances" class="footer-icon">
                 <span class="footer-label">tendances</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/camera')">
-                <img src="{{ url_for('static', filename='footer/cloche.png') }}" alt="Caméra" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/cloche.png') }}" alt="Caméra" class="footer-icon">
             </div>
             <div class="footer-item disabled">
-                <img src="{{ url_for('static', filename='footer/coach.png') }}" alt="Coach" class="footer-icon">
+                <img src="{{ url_for('static', filename='img/footer/coach.png') }}" alt="Coach" class="footer-icon">
                 <span class="footer-label">coach</span>
             </div>
             <div class="footer-item" onclick="navigateToPage('/profile')">
-                <img src="{{ url_for('static', filename='footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
+                <img src="{{ url_for('static', filename='img/footer/profile.png') }}" alt="Profil" class="footer-icon" id="profile-icon">
                 <span class="footer-label">profil</span>
             </div>
         </div>
@@ -142,7 +142,7 @@
                 // Display user profile
                 document.getElementById('userInfo').innerHTML = `
                     <div style="text-align: center; margin-bottom: 24px;">
-                        <img src="/static/logo.svg" alt="${targetUser.username}" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 16px;">
+                        <img src="/static/img/logo.svg" alt="${targetUser.username}" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 16px;">
                         <h1>@${targetUser.username}</h1>
                         ${currentUser.id !== targetUser.id ? `
                             <button 
@@ -194,7 +194,7 @@
                 followingDiv.innerHTML = following.map(follow => `
                     <div class="following-item">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="/static/logo.svg" alt="${follow.following.username}" style="width: 40px; height: 40px; border-radius: 50%;">
+                            <img src="/static/img/logo.svg" alt="${follow.following.username}" style="width: 40px; height: 40px; border-radius: 50%;">
                             <div>
                                 <div style="font-weight: 500;">
                                     <a href="/user/${follow.following.username}" style="text-decoration: none; color: inherit;">
@@ -242,7 +242,7 @@
                 followersDiv.innerHTML = followers.map(follow => `
                     <div class="following-item">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="/static/logo.svg" alt="${follow.follower.username}" style="width: 40px; height: 40px; border-radius: 50%;">
+                            <img src="/static/img/logo.svg" alt="${follow.follower.username}" style="width: 40px; height: 40px; border-radius: 50%;">
                             <div>
                                 <div style="font-weight: 500;">
                                     <a href="/user/${follow.follower.username}" style="text-decoration: none; color: inherit;">

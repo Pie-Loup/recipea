@@ -9,7 +9,7 @@ import uuid
 import time
 import httpx
 from supabase import create_client
-from prompts import prompt_voice, prompt_text, prompt_photo, prompt_update
+from modules.prompts import prompt_voice, prompt_text, prompt_photo, prompt_update
 
 # Create a Blueprint for recipe-related routes
 recipes_bp = Blueprint('recipes', __name__)
