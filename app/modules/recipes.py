@@ -118,7 +118,8 @@ def _generate_recipe_from_voice_sync(audio_files_data):
             if response.text:
                 # Convert Gemini's response text to a dictionary and return it directly
                 recipe_json = json.loads(response.text)
-                if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'questions', 'is_recipe']):
+                required_keys = ['title', 'ingredients', 'steps', 'preparation_time', 'cooking_time', 'quantity', 'difficulty', 'other_elements', 'questions', 'is_recipe']
+                if not all(key in recipe_json for key in required_keys):
                     raise ValueError('Invalid recipe format')
                 return recipe_json
             else:
@@ -150,7 +151,8 @@ def _generate_recipe_from_photo_sync(temp_file_path):
         if response.text:
             # Convert Gemini's response text to a dictionary and return it
             recipe_json = json.loads(response.text)
-            if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'other_elements', 'is_recipe']):
+            required_keys = ['title', 'ingredients', 'steps', 'preparation_time', 'cooking_time', 'quantity', 'difficulty', 'other_elements', 'questions', 'is_recipe']
+            if not all(key in recipe_json for key in required_keys):
                 raise ValueError('Invalid recipe format')
             return recipe_json
         else:
@@ -176,7 +178,8 @@ def _generate_recipe_from_text_sync(text_input):
     if response.text:
         # Convert Gemini's response text to a dictionary and return it
         recipe_json = json.loads(response.text)
-        if not all(key in recipe_json for key in ['title', 'ingredients', 'steps', 'other_elements', 'is_recipe']):
+        required_keys = ['title', 'ingredients', 'steps', 'preparation_time', 'cooking_time', 'quantity', 'difficulty', 'other_elements', 'questions', 'is_recipe']
+        if not all(key in recipe_json for key in required_keys):
             raise ValueError('Invalid recipe format')
         return recipe_json
     else:
@@ -209,7 +212,8 @@ Autres éléments:
     if response.text:
         # Convert Gemini's response text to a dictionary and return it
         recipe_json = json.loads(response.text)
-        if not all(key in recipe_json for key in ['ingredients', 'steps', 'other_elements']):
+        required_keys = ['title', 'ingredients', 'steps', 'preparation_time', 'cooking_time', 'quantity', 'difficulty', 'other_elements', 'questions', 'is_recipe']
+        if not all(key in recipe_json for key in required_keys):
             raise ValueError('Invalid recipe format')
         return recipe_json
     else:
@@ -443,7 +447,7 @@ def save_recipe():
     try:
         # Get recipe data from request
         data = request.json
-        if not data or not all(key in data for key in ['title', 'ingredients', 'steps', 'origin']):
+        if not data or not all(key in data for key in ['title', 'ingredients', 'steps', 'other_elements', 'origin']):
             return jsonify({'error': 'Missing required recipe data'}), 400
 
         # Get user id from JWT token using the verify_supabase_jwt function
@@ -467,6 +471,10 @@ def save_recipe():
             'ingredients': data['ingredients'],
             'steps': data['steps'],
             'other_elements': data.get('other_elements', []),
+            'preparation_time': data.get('preparation_time'),
+            'cooking_time': data.get('cooking_time'),
+            'quantity': data.get('quantity'),
+            'difficulty': data.get('difficulty'),
             'state': 'to_test',
             'origin': data['origin'],
             'user_id': user_id

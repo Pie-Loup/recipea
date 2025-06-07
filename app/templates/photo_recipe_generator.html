@@ -37,6 +37,7 @@
   </div>
 
   <script src="/static/js/async-recipe-generator.js"></script>
+  <script src="/static/js/recipe-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "{{ supabase_url }}";
@@ -55,14 +56,10 @@
     const preview = document.getElementById('preview');
     const generateBtn = document.getElementById('generateBtn');
     const updatePrompt = document.getElementById('update-prompt');
-    const updateBtn = document.getElementById('updateBtn');
-    const saveBtn = document.getElementById('saveBtn');
 
-    // Function to enable save button
-    function showSaveButton() {
-      saveBtn.classList.remove('hidden');
-    }
+    let recipeManager = null;
 
+    // File handling
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -97,167 +94,61 @@
       }
     }
 
-    let currentRecipe = null;
-    let asyncRecipeGenerator = null;
-
-    // Initialize the async recipe generator when DOM is loaded
+    // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-      asyncRecipeGenerator = new AsyncRecipeGenerator();
-    });
+      recipeManager = new RecipeManager();
+      recipeManager.setupRecipeGenerator('photo');
 
-    function displayRecipe(data) {
-      const recipeDiv = document.getElementById('recipe');
-      
-      if (!data.is_recipe) {
-        recipeDiv.innerHTML = `
+      // Override the displayNonRecipeMessage for photo-specific message
+      const originalDisplayNonRecipeMessage = recipeManager.displayNonRecipeMessage;
+      recipeManager.displayNonRecipeMessage = function(container, origin) {
+        container.innerHTML = `
           <div class="recipe-section" style="text-align: center; color: #666;">
             <p>Désolé, je ne peux pas identifier de recette dans cette photo. Pourriez-vous essayer avec une autre photo ?</p>
           </div>
         `;
-        recipeDiv.classList.add('visible');
+        container.classList.add('visible');
         
         // Reset the photo input
-        document.getElementById('preview').src = '';
-        document.getElementById('preview').classList.add('hidden');
-        document.getElementById('fileInput').value = '';
+        preview.src = '';
+        preview.classList.add('hidden');
+        fileInput.value = '';
         document.getElementById('initial-input').classList.remove('hidden');
         document.getElementById('update-input').classList.add('hidden');
         generateBtn.disabled = false;
         generateBtn.textContent = 'Générer la recette';
-        return;
-      }
+      };
 
-      // Only continue with recipe display and update form if it's a valid recipe
-      document.getElementById('initial-input').classList.add('hidden');
-      document.getElementById('update-input').classList.remove('hidden');
+      updatePrompt.addEventListener('input', () => {
+        const updateBtn = document.getElementById('updateBtn');
+        updateBtn.disabled = !updatePrompt.value.trim();
+      });
 
-      recipeDiv.innerHTML = `
-        <div class="recipe-section">
-          <h2 style="color: #1976d2; margin-bottom: 24px; text-align: center;">${data.title || 'Recette'}</h2>
-        </div>
-        <div class="recipe-section">
-          <h3>Ingrédients</h3>
-          <ul class="recipe-list">
-            ${data.ingredients.map(i => `<li>${i}</li>`).join('')}
-          </ul>
-        </div>
-        <div class="recipe-section">
-          <h3>Étapes</h3>
-          <ul class="recipe-list">
-            ${data.steps.map(s => `<li>${s}</li>`).join('')}
-          </ul>
-        </div>
-        ${data.other_elements ? `
-          <div class="recipe-section">
-            <h3>Autres éléments</h3>
-            <ul class="other-elements-list">
-              ${data.other_elements.map(q => `<li>${q}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-      `;
-      recipeDiv.classList.add('visible');
-    }
+      generateBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
 
-    updatePrompt.addEventListener('input', () => {
-      updateBtn.disabled = !updatePrompt.value.trim();
-    });
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Génération en cours...';
 
-    generateBtn.addEventListener('click', async () => {
-      const file = fileInput.files[0];
-      if (!file) return;
+        try {
+          const data = await recipeManager.asyncRecipeGenerator.generateFromPhoto(file, (progress) => {
+            generateBtn.textContent = 'Génération en cours...';
+          });
 
-      generateBtn.disabled = true;
-      generateBtn.textContent = 'Génération en cours...';
+          const isRecipe = recipeManager.handleRecipeGeneration(data, 'photo');
+          
+          if (isRecipe) {
+            updatePrompt.value = '';
+          }
 
-      try {
-        const data = await asyncRecipeGenerator.generateFromPhoto(file, (progress) => {
-          // Update button text with progress feedback
-          generateBtn.textContent = 'Génération en cours...';
-        });
-
-        currentRecipe = data;
-        displayRecipe(data);
-
-        // Show/hide appropriate inputs based on whether it's a recipe
-        if (data.is_recipe) {
-          document.getElementById('initial-input').style.display = 'none';
-          document.getElementById('update-input').style.display = 'block';
-          updatePrompt.value = '';
-          showSaveButton(); // Show the save button when a recipe is generated
+        } catch (error) {
+          alert('Erreur: ' + error.message);
+        } finally {
+          generateBtn.disabled = false;
+          generateBtn.textContent = 'Générer la recette';
         }
-
-      } catch (error) {
-        alert('Erreur: ' + error.message);
-      } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Générer la recette';
-      }
-    });
-
-    updateBtn.addEventListener('click', async () => {
-      const text = updatePrompt.value.trim();
-      if (!text || !currentRecipe) return;
-
-      updateBtn.disabled = true;
-      updateBtn.textContent = 'Modification en cours...';
-
-      try {
-        const data = await asyncRecipeGenerator.updateRecipe(currentRecipe, text, (progress) => {
-          // Update button text with progress feedback
-          updateBtn.textContent = 'Modification en cours...';
-        });
-
-        currentRecipe = data;
-        displayRecipe(data);
-        updatePrompt.value = '';
-        showSaveButton(); // Show the save button after updating recipe
-
-      } catch (error) {
-        alert('Erreur: ' + error.message);
-      } finally {
-        updateBtn.disabled = false;
-        updateBtn.textContent = 'Modifier la recette';
-      }
-    });
-
-    saveBtn.addEventListener('click', async () => {
-      if (!currentRecipe) return;
-
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Sauvegarde en cours...';
-
-      try {
-        const recipeToSave = {
-          title: currentRecipe.title,
-          ingredients: currentRecipe.ingredients,
-          steps: currentRecipe.steps,
-          other_elements: currentRecipe.other_elements || [],
-          origin: 'photo'
-        };
-
-        const response = await fetch('/save_recipe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(recipeToSave)
-        });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        alert('Votre recette a été sauvegardée avec succès !');
-        window.location.href = '/feed'; // Redirect to feed after successful save
-
-      } catch (error) {
-        alert('Erreur lors de la sauvegarde : ' + error.message);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Poster ma sauce';
-      }
+      });
     });
   </script>
 </body>

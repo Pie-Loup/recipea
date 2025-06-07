@@ -1,0 +1,214 @@
+Table follows {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  following_user_id uuid [not null]
+  followed_user_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  indexes {
+    (following_user_id, followed_user_id) [unique, name: 'idx_follows_unique']
+  }
+}
+
+Table profiles {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  username varchar [not null]
+  picture_url varchar
+  created_at timestamp [default: `now()`]
+}
+
+Ref fk_follows_following_user: profiles.id < follows.following_user_id
+Ref fk_follows_followed_user: profiles.id < follows.followed_user_id
+
+Table posts {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  user_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  // Pour les reposts
+  repost_of_post_id uuid [note: 'NULL si ce n\'est pas un repost']
+  is_repost boolean [default: false, note: 'true si c\'est un repost']
+  
+  indexes {
+    user_id [name: 'idx_posts_user']
+    repost_of_post_id [name: 'idx_posts_repost']
+  }
+}
+
+// Relations pour la table posts
+Ref fk_posts_user: posts.user_id > profiles.id
+Ref fk_posts_repost: posts.repost_of_post_id > posts.id
+
+Table post_pictures {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  post_id uuid [not null]
+  url varchar [not null]
+  created_at timestamp [default: `now()`]
+}
+
+// Relations pour post_pictures
+Ref fk_post_pictures_post: post_pictures.post_id > posts.id
+
+// Table de liaison many-to-many entre posts et recettes
+Table post_recipes {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  post_id uuid [not null]
+  recipe_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  
+  // Un post ne peut être lié qu'une seule fois à une recette donnée
+  indexes {
+    (post_id, recipe_id) [unique, name: 'idx_post_recipes_unique']
+    post_id [name: 'idx_post_recipes_post']
+    recipe_id [name: 'idx_post_recipes_recipe']
+  }
+}
+
+// Relations pour post_recipes
+Ref fk_post_recipes_post: post_recipes.post_id > posts.id
+Ref fk_post_recipes_recipe: post_recipes.recipe_id > recipes.id
+
+Table recipes {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  user_id uuid [not null]
+  title varchar [not null]
+  ingredients jsonb [not null]
+  steps jsonb [not null]
+  other_elements jsonb [not null]
+  // On ne sauvegarde pas les questions dans la base de données, mais on les génère dynamiquement
+  // questions jsonb [default: '[]', note: 'Array of questions related to the recipe']
+  
+  // Nouveaux champs structurés
+  preparation_time varchar [note: 'Temps de préparation en string (ex: "30 minutes")']
+  cooking_time varchar [note: 'Temps de cuisson en string (ex: "45 minutes")']
+  quantity varchar [note: 'Quantité/nombre de personnes en string (ex: "4 personnes")']
+  difficulty integer [note: 'Difficulté de 1 à 4']
+  
+  state state [not null]
+  origin origin [not null]
+  status status [not null]
+  created_at timestamp [default: `now()`]
+}
+
+// Relations pour recipes
+Ref fk_recipes_user: recipes.user_id > profiles.id
+
+Table recipe_pictures {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  recipe_id uuid [not null]
+  url varchar [not null]
+  created_at timestamp [default: `now()`]
+}
+
+// Relations pour recipe_pictures
+Ref fk_recipe_pictures_recipe: recipe_pictures.recipe_id > recipes.id
+
+Table recipe_saves {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  recipe_id uuid [not null]
+  user_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (recipe_id, user_id) [unique, name: 'idx_recipe_saves_unique']
+    recipe_id [name: 'idx_recipe_saves_recipe']
+    user_id [name: 'idx_recipe_saves_user']
+  }
+}
+
+// Relations pour recipe_saves
+Ref fk_recipe_saves_recipe: recipe_saves.recipe_id > recipes.id
+Ref fk_recipe_saves_user: recipe_saves.user_id > profiles.id
+
+Table comments {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  user_id uuid [not null]
+  content text [not null, note: 'Contenu du commentaire ou du post principal']
+  
+  // Relations mutuellement exclusives avec foreign keys
+  post_id uuid [note: 'NULL si commentaire sur recette']
+  recipe_id uuid [note: 'NULL si commentaire sur post']
+  
+  // Auto-référence pour les réponses aux commentaires
+  parent_comment_id uuid
+  
+  // Flag pour identifier le contenu principal (remplace is_title_comment)
+  is_main_content boolean [default: false, note: 'true pour le contenu principal du post/recette']
+  
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  // Contrainte CHECK pour assurer qu'on a exactement une référence
+  Note: 'CHECK: (post_id IS NOT NULL AND recipe_id IS NULL) OR (post_id IS NULL AND recipe_id IS NOT NULL)'
+  
+  indexes {
+    post_id [name: 'idx_comments_post']
+    recipe_id [name: 'idx_comments_recipe']
+    parent_comment_id [name: 'idx_comments_parent']
+    user_id [name: 'idx_comments_user']
+  }
+}
+
+// Relations pour comments
+Ref fk_comments_user: comments.user_id > profiles.id
+Ref fk_comments_post: comments.post_id > posts.id
+Ref fk_comments_recipe: comments.recipe_id > recipes.id
+Ref fk_comments_parent: comments.parent_comment_id > comments.id
+
+Table comment_likes {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  comment_id uuid [not null]
+  user_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (comment_id, user_id) [unique, name: 'idx_comment_likes_unique']
+    comment_id [name: 'idx_comment_likes_comment']
+    user_id [name: 'idx_comment_likes_user']
+  }
+}
+
+// Relations pour comment_likes
+Ref fk_comment_likes_comment: comment_likes.comment_id > comments.id
+Ref fk_comment_likes_user: comment_likes.user_id > profiles.id
+
+Table comment_mentions {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  comment_id uuid [not null]
+  mentioned_user_id uuid [not null]
+  
+  // Position du mention dans le texte pour le rendu
+  position_start integer [not null, note: 'Position de @ dans le texte']
+  position_end integer [not null, note: 'Fin du username']
+  
+  created_at timestamp [default: `now()`]
+  
+  // Empêcher les doublons de mentions
+  indexes {
+    (comment_id, mentioned_user_id, position_start) [unique, name: 'idx_mentions_unique']
+    mentioned_user_id [name: 'idx_mentions_user']
+    comment_id [name: 'idx_mentions_comment']
+  }
+}
+
+// Relations pour comment_mentions
+Ref fk_comment_mentions_comment: comment_mentions.comment_id > comments.id
+Ref fk_comment_mentions_user: comment_mentions.mentioned_user_id > profiles.id
+
+// Enumerations
+enum state {
+  "to_test"
+  "approved"
+  "not_approved"
+}
+
+enum status {
+  "draft"
+  "public"
+  "private"
+}
+
+enum origin {
+  "text_ia"
+  "photo"
+  "voice"
+}
