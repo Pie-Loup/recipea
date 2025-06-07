@@ -27,6 +27,7 @@
     </div>
   </div>
   <script src="/static/js/async-recipe-generator.js"></script>
+  <script src="/static/js/recipe-manager.js"></script>
   <script src="/static/js/app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -78,6 +79,19 @@
             if (!session) {
                 window.location.href = '/';
             }
+        });
+
+        // Initialize shared recipe management functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            window.recipeManager = new RecipeManager(
+                'recipe',
+                'update-input', 
+                'update-prompt',
+                'updateBtn',
+                'saveBtn',
+                'voice', // origin for voice recipes
+                "Désolé, je ne peux pas créer une recette à partir de cet enregistrement." // custom error message
+            );
         });
   </script>
 </body>

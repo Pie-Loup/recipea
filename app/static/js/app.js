@@ -108,67 +108,21 @@ async function generateRecipe() {
       recipeDiv.innerHTML = `<p>${status}</p>`;
     });
     
+    // Use RecipeManager to handle the recipe display and setup
+    if (window.recipeManager) {
+      window.recipeManager.handleRecipeGeneration(data);
+    } else {
+      console.warn('RecipeManager not available, falling back to basic display');
+      recipeDiv.innerHTML = `<p class="error">RecipeManager non disponible</p>`;
+    }
+    
+    // Reset audio recordings if no valid recipe
     if (!data.is_recipe) {
-      recipeDiv.innerHTML = `
-        <div class="recipe-section" style="text-align: center; color: #666;">
-          <p>Désolé, je ne peux pas créer une recette à partir de cet enregistrement. Pourriez-vous réessayer en décrivant la recette plus en détail ?</p>
-        </div>
-      `;
-      
-      // Reset audio recordings
       audioBlobs = [];
       audioList.innerHTML = '';
       recipeBtn.disabled = true;
-      return;
-    }
-
-    // Format the recipe data
-    let html = '';
-    
-    // Title section
-    html += `
-      <div class="recipe-section">
-        <h2 style="color: #1976d2; margin-bottom: 24px; text-align: center;">${data.title || 'Recette'}</h2>
-      </div>
-    `;
-    
-    // Ingredients section
-    if (data.ingredients && data.ingredients.length > 0) {
-      html += `
-        <div class="recipe-section">
-          <h3>Ingrédients</h3>
-          <ul class="recipe-list">
-            ${data.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-          </ul>
-        </div>
-      `;
     }
     
-    // Steps section
-    if (data.steps && data.steps.length > 0) {
-      html += `
-        <div class="recipe-section">
-          <h3>Étapes de préparation</h3>
-          <ul class="recipe-list">
-            ${data.steps.map(step => `<li>${step}</li>`).join('')}
-          </ul>
-        </div>
-      `;
-    }
-    
-    // Questions section
-    if (data.questions && data.questions.length > 0) {
-      html += `
-        <div class="recipe-section">
-          <h3>Questions</h3>
-          <ul class="questions-list">
-            ${data.questions.map(question => `<li>${question}</li>`).join('')}
-          </ul>
-        </div>
-      `;
-    }
-    
-    recipeDiv.innerHTML = html;
   } catch (err) {
     recipeDiv.innerHTML = `<p class="error">Erreur lors de la génération de la recette : ${err.message}</p>`;
   } finally {

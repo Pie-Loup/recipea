@@ -137,3 +137,40 @@ textarea {
 .hidden {
     display: none !important;
 }
+
+/* Recipe info section (new structured fields) */
+.recipe-info {
+    background: var(--bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.recipe-info-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.recipe-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--pure-white);
+    border-radius: 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Mobile responsive for recipe info */
+@media (max-width: 768px) {
+    .recipe-info-grid {
+        flex-direction: column;
+    }
+    
+    .recipe-info-item {
+        justify-content: space-between;
+    }
+}

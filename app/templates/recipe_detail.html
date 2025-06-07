@@ -179,12 +179,49 @@
             // Update page title with recipe title
             document.title = `${recipe.title} - sauce`;
             
+            // Build recipe info section (new structured fields)
+            let recipeInfoItems = [];
+            if (recipe.preparation_time) {
+                recipeInfoItems.push(`<div class="recipe-info-item"><span class="info-icon">⏰</span><span class="info-label">Préparation:</span><span class="info-value">${recipe.preparation_time}</span></div>`);
+            }
+            if (recipe.cooking_time) {
+                recipeInfoItems.push(`<div class="recipe-info-item"><span class="info-icon">🔥</span><span class="info-label">Cuisson:</span><span class="info-value">${recipe.cooking_time}</span></div>`);
+            }
+            if (recipe.quantity) {
+                recipeInfoItems.push(`<div class="recipe-info-item"><span class="info-icon">👥</span><span class="info-label">Quantité:</span><span class="info-value">${recipe.quantity}</span></div>`);
+            }
+            if (recipe.difficulty) {
+                const difficultyStars = '⭐'.repeat(recipe.difficulty);
+                recipeInfoItems.push(`<div class="recipe-info-item"><span class="info-icon">📊</span><span class="info-label">Difficulté:</span><span class="info-value">${difficultyStars} (${recipe.difficulty}/4)</span></div>`);
+            }
+            
+            const recipeInfoHtml = recipeInfoItems.length > 0 
+                ? `
+                    <div class="recipe-section recipe-info">
+                        <div class="recipe-info-grid">
+                            ${recipeInfoItems.join('')}
+                        </div>
+                    </div>
+                `
+                : '';
+            
             const otherElementsHtml = recipe.other_elements && recipe.other_elements.length > 0 
                 ? `
                     <div class="recipe-section">
                         <h3 class="section-title">🌟 Autres éléments</h3>
                         <ul class="other-elements-list">
                             ${recipe.other_elements.map(element => `<li>${element}</li>`).join('')}
+                        </ul>
+                    </div>
+                `
+                : '';
+
+            const questionsHtml = recipe.questions && recipe.questions.length > 0 
+                ? `
+                    <div class="recipe-section">
+                        <h3 class="section-title">❓ Questions</h3>
+                        <ul class="questions-list">
+                            ${recipe.questions.map(question => `<li>${question}</li>`).join('')}
                         </ul>
                     </div>
                 `
@@ -212,6 +249,8 @@
                     <h1 class="recipe-title">${recipe.title}</h1>
                     <img class="recipe-image" src="/static/img/default/default_recipe.jpg" alt="${recipe.title}" />
                     
+                    ${recipeInfoHtml}
+                    
                     ${otherElementsHtml}
                     
                     <div class="recipe-section">
@@ -227,6 +266,8 @@
                             ${recipe.steps.map(step => `<li>${step}</li>`).join('')}
                         </ol>
                     </div>
+                    
+                    ${questionsHtml}
                 </div>
                 
                 <div class="recipe-actions">

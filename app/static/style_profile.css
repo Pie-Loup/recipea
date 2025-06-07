@@ -128,3 +128,31 @@ h1, h2 {
 .error-message {
     color: var(--error-color-dark);
 }
+
+/* Create recipe section */
+.create-recipe-section {
+    margin-top: 32px;
+    background: var(--pure-white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    text-align: center;
+}
+
+.create-recipe-btn {
+    padding: 15px 30px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    display: block;
+}
+
+.create-recipe-btn:hover {
+    background-color: #c8281f !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(224, 50, 44, 0.3);
+}
